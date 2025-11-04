@@ -32,14 +32,14 @@ const userSchema = new mongoose.Schema({
     },
 
     token: {
-        type: String,
-        required: true
+        type: String
     },
 
     additionalProfileDetails: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Profile"
     }
+    
 });
 
 const User = mongoose.model("User", userSchema);
