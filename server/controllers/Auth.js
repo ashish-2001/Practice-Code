@@ -43,6 +43,13 @@ async function signup(req, res){
             confirmPassword
         } = parsedResult.data;
 
+        if(password !== confirmPassword){
+            return res.status(404).json({
+                success: false,
+                message: "Password and confirm password should be same!"
+            });
+        };
+
         const existingUser = await User.findOne({
             email
         });
@@ -52,7 +59,7 @@ async function signup(req, res){
                 success: false, 
                 message: "User already exists.Please Login to continue!"
             });
-        }
+        };
 
         const otpRecord = await Otp.findOne({
             email,
@@ -175,7 +182,7 @@ async function signin(req, res){
 };
 
 const otpValidator = z.object({
-    email: z.string().email("Email is required")
+    email: z.string().email("Email is required!")
 });
 
 async function sendOtp(req, res){
@@ -252,7 +259,7 @@ async function changePassword(req, res){
         if(!parsedResult.success){
             return res.status(404).json({
                 success: false,
-                message: "All the fields are required"
+                message: "All the fields are required!"
             });
         };
 
