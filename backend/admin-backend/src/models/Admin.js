@@ -19,7 +19,7 @@ const adminSchema = new mongoose.Schema({
     },
 
     contactNumber: {
-        type: Number,
+        type: String,
         required: true
     },
 
@@ -36,6 +36,10 @@ const adminSchema = new mongoose.Schema({
         type: String,
         enum: ["Admin"],
         default: "Admin"
+    },
+
+    token: {
+        type: String
     },
 
     lastLogin: {
