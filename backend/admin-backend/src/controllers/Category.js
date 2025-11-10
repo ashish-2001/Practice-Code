@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Category } from "../models/Category";
 import { Product } from "../models/Product";
 
@@ -55,7 +55,7 @@ async function createCategory(req, res){
 
         return res.status(200).json({
             success: true,
-            message: "Category created successfully!",,
+            message: "Category created successfully!",
             data: categoryDetails
         });
     } catch(error){
@@ -144,7 +144,8 @@ async function categoryPageDetails(req, res){
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "Internal server error!"
+            message: "Internal server error!",
+            error
         });
     };
 };
