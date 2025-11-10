@@ -20,7 +20,12 @@ const categorySchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Admin",
         required: true
-    }
+    },
+
+    products: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product"
+    }]
     
 }, { timestamps: true });
 
