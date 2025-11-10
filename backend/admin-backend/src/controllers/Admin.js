@@ -1,7 +1,7 @@
 import z, { jwt } from "zod";
-import { Admin } from "../src/models/Admin";
+import { Admin } from "../models/Admin";
 import bcrypt from "bcrypt";
-import { Otp } from "../src/models/Otp";
+import { Otp } from "../models/Otp";
 import otpGenerator from "otp-generator";
 
 const signupValidator = z.object({
