@@ -11,16 +11,24 @@ const contactSchema = new mongoose.Schema({
         required: true
     },
 
-    sendBy: {
+    seller: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Seller"
+        ref: "Seller",
+        required: true
+    },
+
+    status: {
+        type: String,
+        enum: ["Pending", "Resolved"],
+        default: "Pending"
     },
 
     message: {
         type: String,
         required: true
     }
-});
+    
+}, { timestamps: true });
 
 const Contact = mongoose.model("Contact", contactSchema);
 
