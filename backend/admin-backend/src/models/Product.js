@@ -36,6 +36,11 @@ const productSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Seller",
         required: true
+    },
+
+    customerPurchased: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Admin"
     }
 }, { timestamps: true });
 
