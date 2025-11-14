@@ -34,14 +34,21 @@ const productSchema = new mongoose.Schema({
 
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Seller",
+        ref: "User",
         required: true
     },
 
     customerPurchased: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        required: true
+    },
+
+    ratingAndReviews: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "RatingAndReviews"
     }
+
 }, { timestamps: true });
 
 const Product = mongoose.model("Product", productSchema);
