@@ -40,7 +40,7 @@ const productSchema = new mongoose.Schema({
 
     customerPurchased: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Admin"
+        ref: "User"
     }
 }, { timestamps: true });
 
