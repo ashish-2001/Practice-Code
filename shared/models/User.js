@@ -35,16 +35,27 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ["Admin", "Seller", "Customer"],
+        default: "Customer"
     },
+
+    products: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product"
+    }],
 
     token: {
         type: String
+    },
+
+    resetPasswordExpires: {
+        type: Date
     },
 
     lastLogin: {
         type: Date,
         default: Date.now
     }
+
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
