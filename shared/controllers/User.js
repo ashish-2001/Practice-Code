@@ -1,5 +1,5 @@
 import z, { jwt } from "zod";
-import { Admin } from "../models/Admin";
+import { User } from "../models/User.js";
 import bcrypt from "bcrypt";
 import { Otp } from "../models/Otp";
 import otpGenerator from "otp-generator";
@@ -51,15 +51,15 @@ async function signup(req, res){
 
         const profileImage = req.files.profileImage;
 
-        const existingAdmin = await Admin.findOne({
+        const existingUser = await User.findOne({
             email,
             role
         });
 
-        if(existingAdmin){
+        if(existingUser){
             return res.status(404).json({
                 success: false,
-                message: "Admin already exists!"
+                message: "User already exists!"
             });
         };
 
@@ -78,7 +78,7 @@ async function signup(req, res){
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const admin = await Admin.create({
+        const user = await User.create({
             firstName,
             lastName,
             email,
@@ -93,16 +93,16 @@ async function signup(req, res){
         });
 
         const token = jwt.sign({
-            adminId: admin._id,
-            role: admin.role,
-            email: admin.email
+            userId: user._id,
+            role: user.role,
+            email: user.email
         }, JWT_SECRET);
 
         return res.status(200).json({
             success:true,
-            message: "Admin registered successfully!",
+            message: "User registered successfully!",
             token,
-            admin
+            user
         });
     } catch(error){
         return res.status(500).json({
@@ -133,15 +133,15 @@ async function sendOtp(req, res){
 
         const { email, role } = parsedResult.data;
 
-        const checkAdminPresent = await Admin.findOne({
+        const checkUserPresent = await User.findOne({
             email,
             role
         });
 
-        if(checkAdminPresent){
+        if(checkUserPresent){
             return res.status(404).json({
                 success: false,
-                message: "Admin already present!"
+                message: "User already present!"
             });
         };
 
@@ -202,18 +202,18 @@ async function signin(req, res){
             email
         } = parsedResult.data;
 
-        const admin = await Admin.findOne({
+        const user = await User.findOne({
             email
         });
 
-        if(!admin){
+        if(!user){
             return res.status(404).json({
                 success: false,
-                message: "Admin not found. Signup first to continue!"
+                message: "User not found. Signup first to continue!"
             });
         };
 
-        const isPasswordMatch = await bcrypt.compare(password, admin.password);
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
 
         if(!isPasswordMatch){
             return res.status(404).json({
@@ -223,13 +223,13 @@ async function signin(req, res){
         };
 
         const token = jwt.sign({
-            adminId: admin._id,
-            email: admin.email,
-            role: admin.role
+            userId: user._id,
+            email: user.email,
+            role: user.role
         }, JWT_SECRET);
 
-        admin.token = token;
-        admin.password = undefined;
+        user.token = token;
+        user.password = undefined;
 
         const options = {
             expires: new Date(Date.now + 3 * 24 * 60 * 60 * 1000),
@@ -238,9 +238,9 @@ async function signin(req, res){
 
         res.cookie("token", token, options).status(200).json({
             success: true,
-            message: "Admin logged in successfully!",
+            message: "User logged in successfully!",
             token,
-            admin
+            user
         });
     } catch(error){
         return res.status(500).json({
@@ -275,18 +275,18 @@ async function changePassword(req, res){
             confirmPassword
         } = parsedResult.data;
 
-        const adminId = req.admin.adminId;
+        const userId = req.user.userId;
 
-        const adminDetails = await Admin.findById(adminId);
+        const userDetails = await User.findById(userId);
 
-        if(!adminDetails){
+        if(!userDetails){
             return res.status(404).json({
                 success: false,
-                message: "Admin not found. Signup first!"
+                message: "User not found. Signup first!"
             });
         };
 
-        const isPasswordMatch = await bcrypt.compare(oldPassword, adminDetails.password);
+        const isPasswordMatch = await bcrypt.compare(oldPassword, userDetails.password);
 
         if(!isPasswordMatch){
             return res.status(404).json({
@@ -311,8 +311,8 @@ async function changePassword(req, res){
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         
-        const updatedAdminDetails = await Admin.findByIdAndUpdate(
-            adminId,
+        const updatedUserDetails = await User.findByIdAndUpdate(
+            userId,
             {
                 password: hashedPassword
             },
@@ -324,11 +324,11 @@ async function changePassword(req, res){
         try{
 
             const mailResponse = await mailSender(
-                updatedAdminDetails.email,
+                updatedUserDetails.email,
                 "Your password has been updated successfully!",
                 updatedPassword(
-                    updatedAdminDetails.email,
-                    `Password has been updated for ${updatedAdminDetails.firstName} ${updatedAdminDetails.lastName}`
+                    updatedUserDetails.email,
+                    `Password has been updated for ${updatedUserDetails.firstName} ${updatedUserDetails.lastName}`
                 )
             );
 
