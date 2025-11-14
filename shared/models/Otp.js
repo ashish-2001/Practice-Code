@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Error } from "mongoose";
 
 const otpSchema = new mongoose.Schema({
     otp: {
@@ -22,6 +22,31 @@ const otpSchema = new mongoose.Schema({
         default: Date.now,
         expires: 60 * 5
     }
+});
+
+async function sendVerificationEmail(email, otp){
+
+    try{
+        const mailResponse = await mailSender(
+            email,
+            "Email Verification",
+            otpTemplate(otp)
+        )
+
+        console.log("Mail response:", mailResponse);
+    } catch(error){
+        throw new Error("Failed to send verification email!", error);
+    }
+}
+
+otpSchema.pre("save", async function (next){
+    console.log("New document saved to the database");
+
+    if(this.isNew){
+        await sendVerificationEmail(this.email, this.otp);
+    }
+
+    next();
 });
 
 const Otp = mongoose.model("Otp", otpSchema);
