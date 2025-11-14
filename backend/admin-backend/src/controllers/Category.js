@@ -37,7 +37,7 @@ async function createCategory(req, res){
             });
         };
 
-        const createdBy = req.admin?.adminId;
+        const createdBy = req.user?.userId;
 
         if(!createdBy){
             return res.status(401).json({
