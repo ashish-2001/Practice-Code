@@ -1,6 +1,6 @@
 import mongoose, { Error } from "mongoose";
 import { otpTemplate } from "";
-import { mailSender } from "";
+import { mailSender } from "../utils/mailSender";
 
 const otpSchema = new mongoose.Schema({
     otp: {
