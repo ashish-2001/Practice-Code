@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const contactSchema = new mongoose.Schema({
+
     firstName: {
         type: String,
         required: true
@@ -11,9 +12,13 @@ const contactSchema = new mongoose.Schema({
         required: true
     },
 
-    seller: {
+    contact: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Seller",
+        ref: "User"
+    },
+
+    message: {
+        type: String,
         required: true
     },
 
@@ -21,11 +26,6 @@ const contactSchema = new mongoose.Schema({
         type: String,
         enum: ["Pending", "Resolved"],
         default: "Pending"
-    },
-
-    message: {
-        type: String,
-        required: true
     }
     
 }, { timestamps: true });
