@@ -3,7 +3,7 @@ import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { Seller } from "../models/Seller.js";
 import { Customer } from "../models/Customer.js";
-import { Admin } from "../models/Admin.js";
+import { User } from "../models/User.js";
 
 const productValidator = z.object({
     productName: z.string().min(1, "Product name is required!"),
@@ -266,7 +266,7 @@ async function deleteProduct(req, res){
         const customers = product.customerPurchased;
 
         for(const customerId of customers){
-            await Admin.findByIdAndUpdate(customerId, {
+            await User.findByIdAndUpdate(customerId, {
                 $pull: {
                     customerPurchased: productId
                 }
