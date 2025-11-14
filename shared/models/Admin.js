@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const adminSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
 
     firstName: {
         type: String,
@@ -34,8 +34,8 @@ const adminSchema = new mongoose.Schema({
 
     role: {
         type: String,
-        enum: ["Admin"],
-        default: "Admin"
+        enum: ["Admin", "Seller", "Customer"],
+        default: "User"
     },
 
     token: {
@@ -48,8 +48,8 @@ const adminSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-const Admin = mongoose.model("Admin", adminSchema);
+const User = mongoose.model("User", userSchema);
 
 export {
-    Admin
+    User
 }
