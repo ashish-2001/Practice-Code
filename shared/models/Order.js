@@ -4,7 +4,7 @@ const orderSchema = new mongoose.Schema({
 
     customer: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Customer", 
+        ref: "User", 
         required: true
     },
 
@@ -37,6 +37,11 @@ const orderSchema = new mongoose.Schema({
         type: String,
         enum: ["Pending", "Paid", "Failed"],
         default: "Paid"
+    },
+
+    address: {
+        type: String,
+        required: true
     },
 
     orderStatus: {

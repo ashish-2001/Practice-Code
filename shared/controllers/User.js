@@ -1,8 +1,10 @@
 import z, { jwt } from "zod";
 import { User } from "../models/User.js";
+import { mailSender } from "../utils/mailSender.js";
 import bcrypt from "bcrypt";
 import { Otp } from "../models/Otp";
 import otpGenerator from "otp-generator";
+import { ROLE_TYPE } from "../utils/constants.js";
 
 const signupValidator = z.object({
     firstName: z.string().min(1, "First name is too small!"),
@@ -13,7 +15,7 @@ const signupValidator = z.object({
     confirmPassword: z.string().min(6, "Confirm Password is too small!"),
     otp: z.string().min(6, "Otp is invalid!"),
     profileImage: z.string().optional(),
-    role: z.enum(["Admin"]).default("Admin")
+    role: z.enum([ROLE_TYPE.ADMIN, ROLE_TYPE.SELLER, ROLE_TYPE.CUSTOMER])
 });
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -115,7 +117,7 @@ async function signup(req, res){
 
 const otpValidator = z.object({
     email: z.string().email("Invalid email format!"),
-    role: z.enum(["Admin"])
+    role: z.enum([ROLE_TYPE.ADMIN, ROLE_TYPE.CUSTOMER, ROLE_TYPE.SELLER])
 });
 
 async function sendOtp(req, res){
