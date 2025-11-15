@@ -1,8 +1,9 @@
-import z, { jwt } from "zod";
+import z from "zod";
+import { jwt } from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
 import bcrypt from "bcrypt";
-import { Otp } from "../models/Otp";
+import { Otp } from "../models/Otp.js";
 import otpGenerator from "otp-generator";
 import { ROLE_TYPE } from "../utils/constants.js";
 
@@ -11,9 +12,9 @@ const signupValidator = z.object({
     lastName: z.string().min(1, "Last name is too small!"),
     email: z.string().email("Invalid email format!"),
     contactNumber: z.string().regex(/^(\+91)?[6-9]\d{9}$/, "Please enter a valid contact number!"),
-    password: z.string().min(6, "Password is too small!"),
-    confirmPassword: z.string().min(6, "Confirm Password is too small!"),
-    otp: z.string().min(6, "Otp is invalid!"),
+    password: z.string().min(6, "Password must be of at least 6 characters!"),
+    confirmPassword: z.string().min(6, "Confirm Password must be of at least 6 characters!"),
+    otp: z.string().min(6, "Otp is required!"),
     profileImage: z.string().optional(),
     role: z.enum([ROLE_TYPE.ADMIN, ROLE_TYPE.SELLER, ROLE_TYPE.CUSTOMER])
 });
@@ -51,7 +52,7 @@ async function signup(req, res){
             })
         }
 
-        const profileImage = req.files.profileImage;
+        const profileImage = req.files?.profileImage || "";
 
         const existingUser = await User.findOne({
             email,
@@ -148,20 +149,20 @@ async function sendOtp(req, res){
         };
 
         let otp;
-        let optExists;
+        let otpExists;
 
         do{
-            otp = otpGenerator.generate({
+            otp = otpGenerator.generate(6, {
                 upperCaseAlphabets: false,
                 lowerCaseAlphabets: false,
                 specialChars: false
             });
 
-            optExists = await Otp.findOne({
+            otpExists = await Otp.findOne({
                 otp,
                 role
             });
-        } while( optExists );
+        } while( otpExists );
 
         await Otp.create({
             email,
@@ -200,8 +201,8 @@ async function signin(req, res){
         }
 
         const {
-            password,
-            email
+            email,
+            password
         } = parsedResult.data;
 
         const user = await User.findOne({
@@ -233,14 +234,14 @@ async function signin(req, res){
         user.token = token;
         user.password = undefined;
 
-        const options = {
-            expires: new Date(Date.now + 3 * 24 * 60 * 60 * 1000),
+        res.cookie("token", token, {
+            expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
             httpOnly: true
-        };
-
-        res.cookie("token", token, options).status(200).json({
+        });
+        
+        return res.status(200).json({
             success: true,
-            message: "User logged in successfully!",
+            message: "Logged in successfully!",
             token,
             user
         });
@@ -293,14 +294,14 @@ async function changePassword(req, res){
         if(!isPasswordMatch){
             return res.status(404).json({
                 success: false,
-                message: "Password is incorrect!"
+                message: "Old password is incorrect!"
             });
         };
 
         if(oldPassword === newPassword){
             return res.status(404).json({
                 success: false,
-                message: "Old password and new password should not be same!"
+                message: "Old password can not be same as new password!"
             });
         };
 
