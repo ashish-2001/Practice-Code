@@ -267,7 +267,7 @@ async function changePassword(req, res){
         if(!parsedResult.success){
             return res.status(404).json({
                 success: false,
-                message: "All fields are required!"
+                message: "All fields are required!" 
             });
         };
 
