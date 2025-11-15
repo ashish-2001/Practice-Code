@@ -1,5 +1,5 @@
 import z from "zod";
-import { Seller } from "../models/Seller.js";
+import { User } from "../models/User.js";
 import { Contact } from "../models/Contact";
 
 const contactValidator = z.object({
@@ -28,22 +28,23 @@ async function createMessage(req, res){
             message
         } = parsedResult.data;
 
-        const sellerId = req.seller?.sellerId;
+        const userId = req.user?.userId;
 
-        const seller = await Seller.findById(sellerId);
+        const user = await User.findById(userId);
 
-        if(!seller){
-            return res.status(402).json({
+        if(!user){
+            return res.status(404).json({
                 success: false,
-                message: "Seller not found!"
+                message: "User not found!"
             });
         };
 
-        const contactMessage = await Seller.create({
+        const contactMessage = await Contact.create({
             firstName,
             lastName,
             email,
-            message
+            message,
+            user: userId
         });
 
         return res.status(200).json({
@@ -64,7 +65,7 @@ async function getAllMessages(req, res){
 
     try{
 
-        const messages = await Contact.find({}).populate("seller", "firstName lastName email message").sort({
+        const messages = await Contact.find({}).populate("user", "firstName lastName email message").sort({
             createdAt: -1
         });
 
@@ -85,8 +86,15 @@ async function getAllMessages(req, res){
 async function updateMessages(req, res){
 
     try{
-        const messageId = req.params;
+        const { messageId } = req.params;
         const { status } = req.body;
+
+        if(!status){
+            return res.status(402).json({
+                success: false,
+                message: "Status is required!"
+            });
+        };
 
         const updatedMessage = await Contact.findByIdAndUpdate(
             messageId,
@@ -97,6 +105,13 @@ async function updateMessages(req, res){
                 new: true
             }
         );
+
+        if(!updateMessages){
+            return res.status(402).json({
+                success: false,
+                message: "Message could not be updated!"
+            })
+        }
 
         return res.status(200).json({
             success: true,
