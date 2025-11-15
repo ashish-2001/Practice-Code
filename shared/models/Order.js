@@ -12,7 +12,8 @@ const orderSchema = new mongoose.Schema({
         {
             product: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: "Product"
+                ref: "Product",
+                required: true
             }, 
 
             quantity: {
@@ -39,15 +40,21 @@ const orderSchema = new mongoose.Schema({
         default: "Paid"
     },
 
+    orderStatus: {
+        type: String,
+        enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
+        default: "Processing"
+    },
+
     address: {
         type: String,
         required: true
     },
 
-    orderStatus: {
+    paymentMethod: {
         type: String,
-        enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
-        default: "Processing"
+        enum: ["Cash on Delivery", "Online"],
+        default: "Cash on Delivery"
     }
     
 }, { timestamps: true });
