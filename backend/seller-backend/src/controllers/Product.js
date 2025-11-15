@@ -4,6 +4,7 @@ import { Product } from "../models/Product.js";
 import { Seller } from "../models/Seller.js";
 import { Customer } from "../models/Customer.js";
 import { User } from "../models/User.js";
+import { uploadImageToCloudinary } from "../../../../shared/utils/imageUploader.js";
 
 const productValidator = z.object({
     productName: z.string().min(1, "Product name is required!"),
