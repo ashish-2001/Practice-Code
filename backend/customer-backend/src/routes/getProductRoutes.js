@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { getAllProducts } from "../../../seller-backend/src/controllers/Product";
-import { auth, isCustomer } from "../../../../shared/middlewares/auth";
-import { createRatingAndReview, getAllRatingAndReviews, getAverageRating } from "../controllers/RatingAndReviews";
+import { getAllProducts } from "../../../seller-backend/src/controllers/Product.js";
+import { auth, isCustomer } from "../../../../shared/middlewares/auth.js";
+import { createRatingAndReview, getAllRatingAndReviews, getAverageRating } from "../controllers/RatingAndReviews.js";
 
 const router = Router();
 

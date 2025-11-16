@@ -1,6 +1,6 @@
 import z from "zod";
-import { Product } from "../../../../shared/models/Product";
-import { RatingAndReviews } from "../../../../shared/models/RatingAndReviews";
+import { Product } from "../../../../shared/models/Product.js";
+import { RatingAndReviews } from "../../../../shared/models/RatingAndReviews.js";
 import mongoose from "mongoose";
 
 const ratingAndReviewsValidator = z.object({
