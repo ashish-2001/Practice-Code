@@ -2,11 +2,11 @@ import express, { urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
-import { databaseConnect } from "./config/database";
-import { router as userRoutes} from "../shared/routes/userRoutes";
-import { router as contactRoutes } from "../shared/routes/contactRoutes";
+import { databaseConnect } from "./config/database.js";
+import { router as userRoutes} from "../shared/routes/userRoutes.js";
+import { router as contactRoutes } from "../shared/routes/contactRoutes.js";
 import dotenv from "dotenv";
-import { cloudinaryConnect } from "./config/cloudinary";
+import { cloudinaryConnect } from "./config/cloudinary.js";
 
 
 dotenv.config();
