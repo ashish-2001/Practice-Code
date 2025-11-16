@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { changePassword, signin, signup } from "../controllers/User";
+import { changePassword, signin, signup } from "../controllers/User.js";
 import { auth } from "../middlewares/auth";
-import { resetPassword, resetPasswordToken } from "../controllers/ResetPassword";
-import { searchProduct } from "../../backend/seller-backend/src/controllers/Product";
+import { resetPassword, resetPasswordToken } from "../controllers/ResetPassword.js";
+import { searchProduct } from "../../backend/seller-backend/src/controllers/Product.js";
 
 const router = Router();
 
