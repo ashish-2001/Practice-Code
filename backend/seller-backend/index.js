@@ -4,9 +4,8 @@ import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
 import { router as productRoutes } from "./src/routes/productRoutes";
 import { databaseConnect } from "../../shared/config/database";
-import dotenv from "dotenv";
 import { cloudinaryConnect } from "../../shared/config/cloudinary";
-import { success } from "zod";
+import dotenv from "dotenv";
 dotenv.config();
 
 const PORT = process.env.PORT || 4000
