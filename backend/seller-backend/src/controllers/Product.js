@@ -2,7 +2,6 @@ import z from "zod";
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { Seller } from "../models/Seller.js";
-import { Customer } from "../models/Customer.js";
 import { User } from "../models/User.js";
 import { uploadImageToCloudinary } from "../../../../shared/utils/imageUploader.js";
 
