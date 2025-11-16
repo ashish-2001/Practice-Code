@@ -1,6 +1,6 @@
 import express, { urlencoded } from "express";
-import { databaseConnect } from "../../shared/config/database";
-import { cloudinaryConnect } from "../../shared/config/cloudinary";
+import { databaseConnect } from "../../shared/config/database.js";
+import { cloudinaryConnect } from "../../shared/config/cloudinary.js";
 import { router as productRoutes} from "../customer-backend.js";
 import cors from "cors";
 import fileUpload from "express-fileupload";
