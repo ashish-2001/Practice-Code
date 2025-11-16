@@ -15,7 +15,7 @@ async function createMessage(req, res){
         const parsedResult = contactValidator.safeParse(req.body);
 
         if(!parsedResult.success){
-            return res.status(402).json({
+            return res.status(400).json({
                 success: false,
                 message: "All fields are required!"
             });
@@ -50,7 +50,7 @@ async function createMessage(req, res){
         return res.status(200).json({
             success: true,
             message: "Message has been sent successfully!",
-            contactMessage
+            data: contactMessage
         });
     } catch(error){
         return res.status(500).json({
@@ -90,13 +90,13 @@ async function updateMessages(req, res){
         const { status } = req.body;
 
         if(!status){
-            return res.status(402).json({
+            return res.status(400).json({
                 success: false,
                 message: "Status is required!"
             });
         };
 
-        const updatedMessage = await Contact.findByIdAndUpdate(
+        const updatedMessages = await Contact.findByIdAndUpdate(
             messageId,
             {
                 status
@@ -106,7 +106,7 @@ async function updateMessages(req, res){
             }
         );
 
-        if(!updateMessages){
+        if(!updatedMessages){
             return res.status(402).json({
                 success: false,
                 message: "Message could not be updated!"
@@ -116,7 +116,7 @@ async function updateMessages(req, res){
         return res.status(200).json({
             success: true,
             message: "Message updated successfully!",
-            updatedMessage
+            data: updatedMessages
         })
     } catch(error){
         return res.status(500).json({
