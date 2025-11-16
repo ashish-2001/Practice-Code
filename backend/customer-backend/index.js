@@ -3,10 +3,9 @@ import { databaseConnect } from "../../shared/config/database";
 import { cloudinaryConnect } from "../../shared/config/cloudinary";
 import { router as productRoutes} from "../customer-backend.js";
 import cors from "cors";
-import dotenv from "dotenv";
 import fileUpload from "express-fileupload";
 import cookieParser from "cookie-parser";
-import { success } from "zod";
+import dotenv from "dotenv";
 dotenv.config();
 
 
