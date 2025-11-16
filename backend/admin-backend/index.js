@@ -5,7 +5,7 @@ import cors from "cors";
 import { databaseConnect } from "../../shared/config/database";
 import { router as categoryRoutes } from "../admin-backend/src/routes/categoryRoutes.js";
 import { cloudinaryConnect } from "../../shared/config/cloudinary";
-import dotenv from "dotenv";
+import dotenv from "dotenv"
 dotenv.config();
 
 const app = express();
