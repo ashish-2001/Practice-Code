@@ -15,7 +15,7 @@ const app = express();
 
 databaseConnect();
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4003;
 
 const allowedOrigins = [
     "http://localhost:5173",

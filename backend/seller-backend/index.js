@@ -8,7 +8,7 @@ import { cloudinaryConnect } from "../../shared/config/cloudinary";
 import dotenv from "dotenv";
 dotenv.config();
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4002;
 
 const app = express();
 
