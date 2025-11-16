@@ -1,6 +1,6 @@
 import z from "zod";
-import { User } from "../models/User";
-import { mailSender } from "../utils/mailSender";
+import { User } from "../models/User.js";
+import { mailSender } from "../utils/mailSender.js";
 import bcrypt from "bcrypt";
 
 const resetPasswordTokenValidator = z.object({

@@ -1,6 +1,6 @@
 import z from "zod";
 import { User } from "../models/User.js";
-import { Contact } from "../models/Contact";
+import { Contact } from "../models/Contact.js";
 
 const contactValidator = z.object({
     firstName: z.string().min(1, "First name is required!"),
