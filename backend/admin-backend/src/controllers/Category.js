@@ -1,6 +1,6 @@
 import z from "zod";
-import { Category } from "../models/Category";
-import { Product } from "../models/Product";
+import { Category } from "../models/Category.js";
+import { Product } from "../models/Product.js";
 
 const categoryValidator = z.object({
     categoryName: z.string().min(1, "Category is too small!"),
