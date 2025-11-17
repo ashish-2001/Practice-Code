@@ -185,7 +185,6 @@ async function addProductToCategory(req, res){
         const product = await Product.findById(productId);
 
         if(!product){
-
             return res.status(401).json({
                 success: false,
                 message: "Product not found!"
