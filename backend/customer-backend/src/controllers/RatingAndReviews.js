@@ -1,5 +1,5 @@
 import z from "zod";
-import { Product } from "../../../../shared/models/Product.js";
+import { Product } from "../../../../shared/models/Product.js"
 import { RatingAndReviews } from "../../../../shared/models/RatingAndReviews.js";
 import mongoose from "mongoose";
 

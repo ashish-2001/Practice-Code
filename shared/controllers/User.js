@@ -6,6 +6,8 @@ import bcrypt from "bcrypt";
 import { Otp } from "../models/Otp.js";
 import otpGenerator from "otp-generator";
 import { ROLE_TYPE } from "../utils/constants.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const signupValidator = z.object({
     firstName: z.string().min(1, "First name is too small!"),

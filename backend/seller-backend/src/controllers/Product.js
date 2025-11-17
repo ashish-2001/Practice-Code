@@ -1,8 +1,7 @@
 import z from "zod";
-import { Category } from "../models/Category.js";
-import { Product } from "../models/Product.js";
-import { Seller } from "../models/Seller.js";
-import { User } from "../models/User.js";
+import { Category } from "../../../../shared/models/Category.js";
+import { Product } from "../../../../shared/models/Product.js";
+import { User } from "../../../../shared/models/User.js";
 import { uploadImageToCloudinary } from "../../../../shared/utils/imageUploader.js";
 
 const productValidator = z.object({
@@ -124,7 +123,7 @@ async function getSellerProducts(req, res){
 
         const sellerId = req.seller?.sellerId;
 
-        const seller = await Seller.findById(sellerId);
+        const seller = await User.findById(sellerId);
 
         if(!seller){
             return res.status(402).json({
