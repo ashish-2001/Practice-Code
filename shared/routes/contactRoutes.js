@@ -7,3 +7,7 @@ const router = Router();
 router.post("/createMessage", auth, createMessage);
 router.post("/getAllMessages", getAllMessages);
 router.put("/updateMessages", auth, updateMessages);
+
+export {
+    router
+}
