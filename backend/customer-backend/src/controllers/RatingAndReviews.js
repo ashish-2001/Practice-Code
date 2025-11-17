@@ -12,7 +12,6 @@ const ratingAndReviewsValidator = z.object({
 async function createRatingAndReview(req, res){
 
     try{
-
         const parsedResult = ratingAndReviewsValidator.safeParse(req.body);
 
         if(!parsedResult.success){
