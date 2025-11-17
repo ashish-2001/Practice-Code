@@ -22,8 +22,6 @@ async function mailSender(email, title, body){
             html: `${body}`
         });
 
-        console.log("Info:", info);
-
         return info;
     } catch(error){
         return resizeBy.status(500).json({
