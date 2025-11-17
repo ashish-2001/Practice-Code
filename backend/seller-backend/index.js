@@ -5,6 +5,7 @@ import fileUpload from "express-fileupload";
 import { router as productRoutes } from "./src/routes/productRoutes.js";
 import { databaseConnect } from "../../shared/config/database.js";
 import { cloudinaryConnect } from "../../shared/config/cloudinary.js";
+
 import dotenv from "dotenv";
 dotenv.config();
 
