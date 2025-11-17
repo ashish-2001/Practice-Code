@@ -75,6 +75,7 @@ async function createRatingAndReview(req, res){
 async function getAverageRating(req, res){
 
     try{
+        
         const { productId } = req.body || req.query;
 
         const result = await RatingAndReviews.aggregate([
