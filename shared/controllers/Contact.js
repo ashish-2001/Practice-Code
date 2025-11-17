@@ -38,7 +38,6 @@ async function createMessage(req, res){
                 message: "User not found!"
             });
         };
-
         const contactMessage = await Contact.create({
             firstName,
             lastName,
