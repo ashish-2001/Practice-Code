@@ -127,9 +127,9 @@ async function categoryPageDetails(req, res){
             category: {
                 $ne: categoryId
             }
-        }).populate("createdBy", "sellerName email").limit(10).exec();
+        }).populate("createdBy", "firstName lastName email").limit(10).exec();
 
-        const mostSellingProducts = (await Product.find({}).populate("createdBy", "sellerName email")).sort({
+        const mostSellingProducts = (await Product.find({}).populate("createdBy", "firstName lastName email")).sort({
             sold: -1
         }).limit(10).exec();
 
