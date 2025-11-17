@@ -115,7 +115,7 @@ async function categoryPageDetails(req, res){
 
         const selectedProducts = await Product.find({
             category: categoryId
-        }).populate("createdBy", "sellerName email").exec();
+        }).populate("createdBy", "firstName lastName email").exec();
 
         if(!selectedProducts.length){
             return res.status(401).json({
