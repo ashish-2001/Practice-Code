@@ -14,7 +14,6 @@ const productValidator = z.object({
 async function createProduct(req, res){
 
     try{
-
         const parsedResult = productValidator.safeParse(req.body);
 
         if(!parsedResult.success){
