@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Category } from "../../../../shared/models/Category.js";
 import { Product } from "../../../../shared/models/Product.js";
 
@@ -150,10 +150,28 @@ async function categoryPageDetails(req, res){
     };
 };
 
+const addProductToCategoryValidator = z.object({
+    categoryId: z.string().min(1, "Category id is is required!"),
+    productId: z.string().min(1, "Product id is required!")
+});
+
 async function addProductToCategory(req, res){
 
     try{
-        const { categoryId, productId } = req.body;
+        
+        const parsedResult = addProductToCategoryValidator.safeParse(req.body);
+
+        if(!parsedResult.success){
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required!"
+            });
+        };
+
+        const {
+            categoryId,
+            productId
+        } = parsedResult.data;
 
         const category = await Category.findById(categoryId);
 
