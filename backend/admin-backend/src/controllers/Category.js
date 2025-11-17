@@ -129,7 +129,7 @@ async function categoryPageDetails(req, res){
             }
         }).populate("createdBy", "firstName lastName email").limit(10).exec();
 
-        const mostSellingProducts = (await Product.find({}).populate("createdBy", "firstName lastName email")).sort({
+        const mostSellingProducts = await Product.find({}).populate("createdBy", "firstName lastName email").sort({
             sold: -1
         }).limit(10).exec();
 
