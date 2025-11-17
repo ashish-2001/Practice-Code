@@ -5,9 +5,9 @@ import { router as productRoutes} from "../customer-backend/src/routes/getProduc
 import cors from "cors";
 import fileUpload from "express-fileupload";
 import cookieParser from "cookie-parser";
+
 import dotenv from "dotenv";
 dotenv.config();
-
 
 const app = express();
 
