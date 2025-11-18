@@ -1,58 +1,61 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import useNavigate from "react-router-dom";
+import useDispatch from ""
 
 function SignupForm(){
 
-const [showPassword, setShowPassword] = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    contactNumber: "",
-    password: "",
-    confirmPassword: ""
-});
-
-const { firstName, lastName, email, contactNumber, password, confirmPassword } = formData;
-
-const handleOnChange = (e) => {
-    setFormData((prevData) => ({
-        ...prevData,
-        [e.target.name]: e.target.value
-    }));
-};
-
-const handleOnSubmit = (e) => {
-    e.preventDefault();
-    if(password !== confirmPassword){
-        toast.error("Passwords do not match!");
-        return;
-    }
-
-    const signupData = {
-        ...formData
-    }
-
-    setFormData({
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
         email: "",
         contactNumber: "",
         password: "",
         confirmPassword: ""
-    })
-}
+    });
 
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { firstName, lastName, email, contactNumber, password, confirmPassword } = formData;
 
-    return (
+    const handleOnChange = (e) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            [e.target.name]: e.target.value
+        }));
+    };
+
+    const handleOnSubmit = (e)=> {
+        e.preventDefault();
+
+        if(password !== confirmPassword){
+            toast.error("Passwords do not match!");
+            return;
+        }
+
+        const signupData = {
+            ...formData
+        };
+
+        setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            contactNumber: "",
+            password: "",
+            confirmPassword: ""
+        });
+    }
+
+    return(
         <div>
             <form onSubmit={handleOnSubmit}>
-                <div className="flex flex-col justify-center items-center">
+                <div>
                     <label>
                         <p>
-                            Firstname:
+                            First Name:
                         </p>
                         <input
                             required
@@ -66,7 +69,7 @@ const handleOnSubmit = (e) => {
                     </label>
                     <label>
                         <p>
-                            Lastname:
+                            Last Name:
                         </p>
                         <input
                             required
@@ -87,35 +90,7 @@ const handleOnSubmit = (e) => {
                             type="email"
                             name="email"
                             value={email}
-                            placeholder="Enter email address!"
-                            onChange={handleOnChange}
-                            className=""
-                        />
-                    </label>
-                    <label>
-                        <p>
-                            Create Password:
-                        </p>
-                        <input
-                            required
-                            type={ showPassword ? "text" : "password"}
-                            name="password"
-                            value={password}
-                            placeholder="Enter password!"
-                            onChange={handleOnChange}
-                            className=""
-                        />
-                    </label>
-                    <label>
-                        <p>
-                            Confirm Password:
-                        </p>
-                        <input
-                            required
-                            type={showConfirmPassword ? "text" : "password"}
-                            name="confirmPassword"
-                            value={confirmPassword}
-                            placeholder="Confirm password!"
+                            placeholder="Enter email!"
                             onChange={handleOnChange}
                             className=""
                         />
@@ -134,10 +109,42 @@ const handleOnSubmit = (e) => {
                             className=""
                         />
                     </label>
+                    <label>
+                        <p>
+                            Password:
+                        </p>
+                        <input
+                            required
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={password}
+                            placeholder="Enter password!"
+                            onChange={handleOnChange}
+                            className=""
+                        />
+                    </label>
+                    <label>
+                        <p>
+                            Confirm Password:
+                        </p>
+                        <input
+                            required
+                            type={showConfirmPassword ? "text" : "password"}
+                            name="confirmPassword"
+                            value={confirmPassword}
+                            placeholder="Enter confirm password!"
+                            onChange={handleOnChange}
+                            className=""
+                        />
+                    </label>
 
-                    <button type="submit">Signup!</button>
+                    <button type="submit">sign up!</button>
                 </div>
             </form>
         </div>
     )
+}
+
+export {
+    SignupForm
 }
