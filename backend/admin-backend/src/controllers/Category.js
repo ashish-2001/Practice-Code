@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Category } from "../../../../shared/models/Category.js";
 import { Product } from "../../../../shared/models/Product.js";
 

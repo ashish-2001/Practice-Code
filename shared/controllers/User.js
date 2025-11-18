@@ -18,8 +18,7 @@ const signupValidator = z.object({
     password: z.string().min(6, "Password must be of at least 6 characters!"),
     confirmPassword: z.string().min(6, "Confirm Password must be of at least 6 characters!"),
     otp: z.string().min(6, "Otp is required!"),
-    profileImage: z.string().optional(),
-    role: z.enum([ROLE_TYPE.ADMIN, ROLE_TYPE.SELLER, ROLE_TYPE.CUSTOMER])
+    profileImage: z.string().optional()
 });
 
 const JWT_SECRET = process.env.JWT_SECRET;
