@@ -1,8 +1,31 @@
+import { useState } from "react"
+
 function SigninForm(){
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [formData, setFormData] = useState({
+        email: "",
+        password: ""
+    });
+
+    const { email, password } = formData;
+    
+    const handleOnChange = (e) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            [e.target.name]: e.target.value
+        }));
+    };
+
+    const handleOnSubmit = (e) => {
+        e.preventDefault();
+
+        
+    }
 
     return (
         <div>
-            <form>
+            <form onSubmit={handleOnSubmit}>
                 <div>
                     <label>
                         <p>
