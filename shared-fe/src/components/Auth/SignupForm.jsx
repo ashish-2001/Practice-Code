@@ -1,14 +1,15 @@
 import { useState } from "react"
-import toast from "react-hot-toast";
-import useNavigate from "react-router-dom";
-import useDispatch from "react-redux";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { setSignupData } from "../../slices/authSlice";
-import { sendOtp } from "../../../../shared/controllers/User.js";
+import { AiOutlineEyeInvisible, AiOutlineEye } from "react-icons/ai"
 
 function SignupForm(){
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -35,7 +36,7 @@ function SignupForm(){
         if(password !== confirmPassword){
             toast.error("Passwords do not match!");
             return;
-        }
+        };
 
         const signupData = {
             ...formData
