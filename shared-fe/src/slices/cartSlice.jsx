@@ -16,8 +16,8 @@ const initialState = {
 };
 
 const updateProductTotal = (state) => {
-    const totalItems = state.cart.reduce((acc, item) => acc + item.quantity, 0);
-    const totalAmount = state.cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    state.totalItems = state.cart.reduce((acc, item) => acc + item.quantity, 0);
+    state.totalAmount = state.cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     localStorage.setItem("cart", JSON.stringify(state.cart));
     localStorage.setItem("totalItems", JSON.stringify(state.totalItems));
@@ -47,7 +47,7 @@ const cartSlice = createSlice({
             updateProductTotal(state);
         },
 
-        removeFromCart: (state, action){
+        removeFromCart: (state, action) => {
             const productId = action.payload;
             
             state.cart.filter((item) => item._id !== productId);
