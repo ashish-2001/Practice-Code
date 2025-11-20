@@ -1,7 +1,9 @@
 import { useState } from "react"
 import toast from "react-hot-toast";
 import useNavigate from "react-router-dom";
-import useDispatch from ""
+import useDispatch from "react-redux";
+import { setSignupData } from "../../slices/authSlice";
+import { sendOtp } from "../../../../shared/controllers/User.js";
 
 function SignupForm(){
 
@@ -38,6 +40,9 @@ function SignupForm(){
         const signupData = {
             ...formData
         };
+
+        dispatch(setSignupData(signupData));
+        dispatch(sendOtp(formData.email, navigate));
 
         setFormData({
             firstName: "",
@@ -122,6 +127,15 @@ function SignupForm(){
                             onChange={handleOnChange}
                             className=""
                         />
+                        <span onClick={() => setShowPassword((prev) => !prev)}>
+                            {
+                                showPassword ? (
+                                    <AiOutlineEyeInvisible/>
+                                ) : (
+                                    <AiOutlineEye/>
+                                )
+                            }
+                        </span>
                     </label>
                     <label>
                         <p>
@@ -136,6 +150,15 @@ function SignupForm(){
                             onChange={handleOnChange}
                             className=""
                         />
+                        <span onClick={() => setShowConfirmPassword((prev) => !prev)}>
+                            {
+                                showConfirmPassword ? (
+                                    <AiOutlineEyeInvisible/>
+                                ) : (
+                                    <AiOutlineEye/>
+                                )
+                            }
+                        </span>
                     </label>
 
                     <button type="submit">sign up!</button>
