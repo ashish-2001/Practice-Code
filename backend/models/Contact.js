@@ -17,6 +17,11 @@ const contactSchema = new mongoose.Schema({
         required: true
     },
 
+    contactNumber: {
+        type: Number,
+        required: true
+    },
+
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
