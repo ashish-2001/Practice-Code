@@ -43,16 +43,16 @@ const productSchema = new mongoose.Schema({
         ref: "User"
     }],
 
-    ratingAndReviews: {
+    ratingAndReviews: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "RatingAndReviews"
-    },
+    }],
 
-    status: [{
+    status: {
         type: String,
         enum: ["Draft", "Published"],
         default: "Draft"
-    }]
+    }
 
 }, { timestamps: true });
 
