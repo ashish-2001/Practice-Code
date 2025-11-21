@@ -111,6 +111,7 @@ async function signup(req, res){
             email: user.email
         }, JWT_SECRET);
 
+        user.token = token;
         user.password = undefined;
 
         return res.status(200).json({
