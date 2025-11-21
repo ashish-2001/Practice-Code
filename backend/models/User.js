@@ -38,7 +38,16 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ["Admin", "Seller", "Customer"],
-        default: "Customer"
+        required: true
+    },
+
+    active: {
+        type: Boolean
+    },
+
+    approved: {
+        type: Boolean,
+        default: true
     },
 
     products: [{
