@@ -10,6 +10,15 @@ import { ROLE_TYPE } from "../utils/constants.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
+function detectRole(req){
+    const host = (req.headers.origin || req.headers.host || req.hostname || "").toString().toLowerCase();
+    if(host.includes("http://localhost:5000/admin")) return "Admin";
+    if(host.includes("http://localhost:5001/seller")) return "Seller";
+    return "Customer";
+}
+
 const signupValidator = z.object({
     firstName: z.string().min(1, "First name is too small!"),
     lastName: z.string().min(1, "Last name is too small!"),
@@ -18,10 +27,8 @@ const signupValidator = z.object({
     password: z.string().min(6, "Password must be of at least 6 characters!"),
     confirmPassword: z.string().min(6, "Confirm Password must be of at least 6 characters!"),
     otp: z.string().min(6, "Otp is required!"),
-    profileImage: z.string().optional()
+    profileImage: z.string().optional(),
 });
-
-const JWT_SECRET = process.env.JWT_SECRET;
 
 async function signup(req, res){
 
@@ -42,10 +49,11 @@ async function signup(req, res){
             email,
             password,
             confirmPassword,
-            role,
             contactNumber,
             otp
         } = parsedResult.data;
+
+        const role = detectRole(req);
 
         if(password !== confirmPassword){
             return res.status(404).json({
@@ -103,6 +111,8 @@ async function signup(req, res){
             email: user.email
         }, JWT_SECRET);
 
+        user.password = undefined;
+
         return res.status(200).json({
             success:true,
             message: "User registered successfully!",
@@ -113,14 +123,13 @@ async function signup(req, res){
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
-            error
+            error: error.message || error
         });
     };
 };
 
 const otpValidator = z.object({
-    email: z.string().email("Invalid email format!"),
-    role: z.enum([ROLE_TYPE.ADMIN, ROLE_TYPE.CUSTOMER, ROLE_TYPE.SELLER])
+    email: z.string().email("Invalid email format!")
 });
 
 async function sendOtp(req, res){
@@ -136,7 +145,9 @@ async function sendOtp(req, res){
             });
         };
 
-        const { email, role } = parsedResult.data;
+        const { email } = parsedResult.data;
+
+        const role = detectRole(req);
 
         const checkUserPresent = await User.findOne({
             email,
@@ -157,7 +168,8 @@ async function sendOtp(req, res){
             otp = otpGenerator.generate(6, {
                 upperCaseAlphabets: false,
                 lowerCaseAlphabets: false,
-                specialChars: false
+                specialChars: false,
+                digits: false
             });
 
             otpExists = await Otp.findOne({
@@ -207,8 +219,11 @@ async function signin(req, res){
             password
         } = parsedResult.data;
 
+        const role = detectRole(req);
+
         const user = await User.findOne({
-            email
+            email,
+            role
         });
 
         if(!user){
@@ -280,7 +295,7 @@ async function changePassword(req, res){
             confirmPassword
         } = parsedResult.data;
 
-        const userId = req.user.userId;
+        const userId = req.user?.userId;
 
         const userDetails = await User.findById(userId);
 
