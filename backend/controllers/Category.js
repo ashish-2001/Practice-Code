@@ -1,6 +1,7 @@
 import z from "zod";
 import { Category } from "../../shared/models/Category.js";
 import { Product } from "../../shared/models/Product.js";
+import { uploadImageToCloudinary } from "../utils/imageUploader.js";
 
 const categoryValidator = z.object({
     categoryName: z.string().min(1, "Category is too small!"),
@@ -24,8 +25,6 @@ async function createCategory(req, res){
             categoryDescription
         } = parsedResult.data;
 
-        const thumbnailImage = req.files?.thumbnailImage || null;
-
         const existingCategory = await Category.findOne({
             categoryName: categoryName.trim()
         });
@@ -37,6 +36,7 @@ async function createCategory(req, res){
             });
         };
 
+        
         const createdBy = req.user?.userId;
 
         if(!createdBy){
@@ -45,6 +45,27 @@ async function createCategory(req, res){
                 message: "Unauthorized. User not found!"
             });
         };
+
+        let thumbnailImage = "";
+
+        if(req.files?.thumbnailImage){
+            try{
+                const uploaded = uploadImageToCloudinary(
+                    req.files.thumbnailImage,
+                    "categories",
+                    1000,
+                    1000
+                )
+
+                thumbnailImage = uploaded.secure_url
+            }catch(error){
+                return res.status(500).json({
+                    success: false,
+                    message: "Internal server error!",
+                    error: error.message
+                })
+            }
+        }
 
         const categoryDetails = await Category.create({
             categoryName: categoryName.trim(),
@@ -127,11 +148,11 @@ async function categoryPageDetails(req, res){
             category: {
                 $ne: categoryId
             }
-        }).populate("createdBy", "firstName lastName email").limit(10).exec();
+        }).populate("createdBy", "firstName lastName email").limit(10);
 
         const mostSellingProducts = await Product.find({}).populate("createdBy", "firstName lastName email").sort({
             sold: -1
-        }).limit(10).exec();
+        }).limit(10);
 
         return res.status(200).json({
             success: true,
