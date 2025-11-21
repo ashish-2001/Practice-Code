@@ -38,11 +38,10 @@ const productSchema = new mongoose.Schema({
         required: true
     },
 
-    customerPurchased: {
+    customerPurchased: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+        ref: "User"
+    }],
 
     ratingAndReviews: {
         type: mongoose.Schema.Types.ObjectId,
