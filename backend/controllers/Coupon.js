@@ -6,6 +6,8 @@ const couponValidator = z.object({
     code: z.string().min(5).max(10).transform(val => val.toUpperCase()).refine(val => /^[A-Z0-9]+$/.text(val), {
         message: "Coupon can contain only A-Z and 0-9"
     }),
+    product: z.string().min(1, "Product is required!"),
+    category: z.string().min(1, "Category is required!"),
     discountType: z.string().enum(["Flat", "Percentage"]),
     discountValue: z.number().min(1),
     minOrderAmount: z.number().min(0).optional(),
