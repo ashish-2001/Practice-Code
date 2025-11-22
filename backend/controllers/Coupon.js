@@ -167,9 +167,103 @@ async function updateCoupon(req, res){
                 });
             };
         }
+
+        if(updates.product || updates.category){
+            const productId = updates.product || updates.coupon;
+            const categoryId = updates.category || updates.coupon;
+
+            const productData = await Product.findById(productId);
+            const categoryData = await Category.findById(categoryId);
+
+            if(!productData || !categoryData){
+                return res.status(404).json({
+                    success: false,
+                    message: "Invalid product or category!"
+                });
+            };
+
+            if(String(productData.category) !== String(categoryId)){
+                return res.status(403).json({
+                    success: false,
+                    message: "The product does not belong to the selected category!"
+                });
+            };
+
+            if(req.user.role === "Seller"){
+                if(String(productData.createdBy) !== String(req.user._id)){
+                    return res.status(403).json({
+                        success: false,
+                        message: "You cannot assign coupon to another's product!"
+                    });
+                };
+            };
+        };
+
+        Object.assign(coupon, updates);
+
+        await coupon.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Coupon updated successfully!",
+            coupon
+        });
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        })
+    }
+}
+
+async function deleteCoupon(req, res){
+
+    try{
+        const couponId = req.params.id;
+
+        if(req.user.role === "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Customer cannot delete coupon!"
+            });
+        }
+
+        const coupon = await  Coupon.findById(couponId);
+
+        if(!coupon){
+            return res.status(404).json({
+                success: false,
+                message: "Coupon not found!"
+            });
+        }
+
+        if(req.user.role === "Seller"){
+            if(String(coupon.createdBy) !== String(req.user._id)){
+                return res.status(403).json({
+                    success: false,
+                    message: "You can not delete another's coupon!"
+                });
+            };
+        };
+        
+        await Coupon.deleteOne({ _id: couponId });
+
+        return res.status(200).json({
+            success: true,
+            message: "Coupon deleted successfully!"
+        })
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        })
     }
 }
 
 export {
-    createCoupon
+    createCoupon,
+    updateCoupon,
+    deleteCoupon
 }
