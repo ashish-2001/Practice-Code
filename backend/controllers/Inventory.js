@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
-import z from "zod";
+import z, { success } from "zod";
 import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
+import { User } from "../models/User";
 
 const inventoryValidator = new mongoose.Schema({
-    product: z.string().min(1, "Product id is required!"),
     change: z.number().min(1, "Inventory is required!"),
     reason: z.enum(["Purchase", "Order Cancelled", "Stock update"]),
 })
@@ -21,12 +21,24 @@ async function inventory(req, res){
     };
 
     const {
-        product,
         change,
         reason
     }  = parsedResult.data;
 
-    const productData = await Product.findById(product).populate("category");
+    const userId = req.user._id;
+    
+    const user = await User.findById(userId);
+
+    if(!user){
+        return res.status(404).json({
+            success: false,
+            message: "User not found!"
+        });
+    };
+
+    const productId = req.product?._id;
+
+    const productData = await Product.findById(productId).populate("category");
 
     if(!productData){
         return res.status(404).json({
