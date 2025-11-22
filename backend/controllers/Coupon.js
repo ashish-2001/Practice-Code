@@ -246,13 +246,113 @@ async function deleteCoupon(req, res){
                 });
             };
         };
-        
+
         await Coupon.deleteOne({ _id: couponId });
 
         return res.status(200).json({
             success: true,
             message: "Coupon deleted successfully!"
         })
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        })
+    }
+}
+
+async function getAllCoupons(req, res){
+
+    try{
+        let coupons;
+
+        if(req.user.role !== "Admin"){
+            coupons = await Coupon.find().populate("product").populate("createdBy");
+        }
+        else if(req.user.role === "Seller"){
+            coupons = await Coupon.find({
+                createdBy: req.user._id
+            }).populate("product").populate("createdBy");
+        } else{
+            coupons = await Coupon.find({ active: true }).populate("product");
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Coupons fetched successfully!",
+            coupons
+        });
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        })
+    }
+}
+
+async function applyCoupon(req, res){
+
+    try{
+        const { code, productId, orderAmount } = req.body;
+
+        const coupon = await Coupon.findOne({ code });
+
+        if(!coupon){
+            return res.status(404).json({
+                success: false,
+                message: "Coupon not found!"
+            })
+        }
+
+        if(new Date(coupon.expiry) < new Date()){
+            return res.status(400).json({
+                success: false,
+                message: "Coupon has expired!"
+            });
+        };
+
+        if(!coupon.active){
+            return res.status(400).json({
+                success: false,
+                message: "This coupon is no longer active!"
+            });
+        }
+
+        if(String(coupon.product) !== String(productId)){
+            return res.status(403).json({
+                success: false,
+                message: "This coupon is not valid for this product!"
+            });
+        };
+
+        if(orderAmount < coupon.minOrderAmount){
+            return res.status(400).json({
+                success: false,
+                message: `Minimum order amount must be ₹${coupon.minOrderAmount}`
+            })
+        }
+
+        let discount = 0;
+
+        if(coupon.discountType === "Flat"){
+            discount = coupon.discountValue;
+        } else{
+            discount = (orderAmount * coupon.discountValue)/100;
+        }
+
+        if(coupon.maxDiscount && discount > coupon.discountValue){
+            discount = coupon.maxDiscount;
+        }
+
+        const finalAmount = orderAmount - discount;
+
+        return res.status(200).json({
+            success: true,
+            message: "Coupon applied!",
+            finalAmount
+        });
     } catch(error){
         return res.status(500).json({
             success: false,
