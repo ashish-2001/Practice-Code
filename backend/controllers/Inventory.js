@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
 import { User } from "../models/User";
