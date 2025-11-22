@@ -1,6 +1,8 @@
 import z, { success } from "zod";
 import { User } from "../models/User";
 import { Coupon } from "../models/Coupon";
+import { Product } from "../models/Product";
+import { Category } from "../models/Category";
 
 const couponValidator = z.object({
     code: z.string().min(5).max(10).transform(val => val.toUpperCase()).refine(val => /^[A-Z0-9]+$/.text(val), {
@@ -16,9 +18,16 @@ const couponValidator = z.object({
     active: z.boolean()
 });
 
-async function coupon(req, res){
+async function createCoupon(req, res){
 
     try{
+
+        if(req.user.role === "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Customer cannot create coupon!"
+            });
+        };
 
         const parsedResult = couponValidator.safeParse(req.body);
 
@@ -29,27 +38,61 @@ async function coupon(req, res){
             });
         };
 
-        const data = parsedResult.data;
+        const {
+            product,
+            category,
+            code
+        } = parsedResult.data;
 
-        const user = await User.findById(req.user._id);
+        const productData = await Product.findById(product);
 
-        if(!user){
+        if(!productData){
             return res.status(404).json({
                 success: false,
-                message: "User not found!"
+                message: "Product not found!"
+            });
+        }
+
+        const categoryData = await Category.findById(category);
+
+        if(!categoryData){
+            return res.status(404).json({
+                success: false,
+                message: "Category not found!"
             });
         };
 
-        if(!["Admin", "Seller"].includes(user.role)){
+        if(String(productData.category) !== String(category)){
             return res.status(403).json({
                 success: false,
-                message: "Admin and seller can only create coupon!"
+                message: "This product does not belong to the selected category!"
+            })
+        }
+
+        if(req.user.role === "Seller"){
+            if(String(productData.createdBy) !== String(req.user._id)){
+                return res.status(403).json({
+                    success: false,
+                    message: "You cannot create coupon for  another seller's product!"
+                })
+            }
+        };
+
+        const already = await Coupon.findOne({
+            code,
+            product
+        });
+
+        if(already){
+            return res.status(403).json({
+                success: false,
+                message: "Coupon has been already created for this product!"
             });
         };
 
         const coupon = await Coupon.create({
-            ...data,
-            createdBy: user._id
+            ...parsedResult.data,
+            createdBy: req.user._id
         });
 
         return req.status(200).json({
@@ -66,6 +109,67 @@ async function coupon(req, res){
     }
 }
 
+async function updateCoupon(req, res){
+
+    try{
+        const couponId = req.params.id;
+
+        if(req.user.role === "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Customer cannot create coupon!"
+            });
+        };
+
+        const coupon = await Coupon.findById(couponId);
+
+        if(!coupon){
+            return res.status(404).json({
+                success: false,
+                message: "Coupon not found!"
+            });
+        };
+
+        if(req.user.role === "Seller"){
+            if(String(coupon.createdBy) !== String(req.user._id)){
+                return res.status(403).json({
+                    success: false,
+                    message: "You can not update some one else coupon!"
+                });
+            }
+        }
+
+        const parsedResult = couponValidator.partial().safeParse(req.body);
+
+        if(!parsedResult.success){
+            return res.status(403).json({
+                success: false,
+                message: "All fields are required!"
+            });
+        };
+
+        const updates = parsedResult.data;
+
+        if(updates.code){
+            updates.code = updates.code.toUpperCase();
+
+            const exists = await Coupon.findOne({
+                code: updates.code,
+                _id: {
+                    $ne: couponId
+                }
+            })
+
+            if(exists){
+                return req.status(402).json({
+                    success: false,
+                    message: "This coupon code already exists!"
+                });
+            };
+        }
+    }
+}
+
 export {
-    coupon
+    createCoupon
 }
