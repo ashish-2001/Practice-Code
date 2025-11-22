@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import z from "zod";
 
-const addressSchema = z.object({
+const addressSchema = new mongoose.Schema({
 
     user: {
         type: mongoose.Schema.Types.ObjectId,
