@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import z from "zod";
 
-const couponSchema = z.object({
+const couponSchema = new mongoose.Schema({
 
     code: {
         type: String,
