@@ -6,6 +6,7 @@ const contactValidator = z.object({
     firstName: z.string().min(1, "First name is required!"),
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Email format is not correct!"),
+    contactNumber: z.number().min(10, "Contact number is not correct!"),
     message: z.string().min(1, "Message is required!")
 });
 
@@ -25,8 +26,16 @@ async function createMessage(req, res){
             firstName,
             lastName,
             email,
-            message
+            message,
+            contactNumber
         } = parsedResult.data;
+
+        if(contactNumber !== 10 ){
+            return res.status(403).json({
+                success: false,
+                message: "Contact number is invalid!"
+            })
+        }
 
         const userId = req.user?.userId;
 
