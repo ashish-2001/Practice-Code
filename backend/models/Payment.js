@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import z from "zod";
 
-const paymentSchema = z.object({
+const paymentSchema = new mongoose.Schema({
 
     orderId: {
         type: String,
