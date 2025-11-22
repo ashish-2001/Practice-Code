@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import z from "zod";
 
-const inventorySchema = z.object({
+const inventorySchema = new mongoose.Schema({
 
     product: {
         type: mongoose.Schema.Types.ObjectId,
