@@ -2,6 +2,18 @@ import mongoose from "mongoose";
 
 const couponSchema = new mongoose.Schema({
 
+    product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true
+    },
+
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true
+    },
+
     code: {
         type: String,
         required: true,
@@ -36,6 +48,12 @@ const couponSchema = new mongoose.Schema({
 
     active: {
         type: Boolean,
+        required: true
+    },
+
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
         required: true
     }
 }, { timestamps: true });
