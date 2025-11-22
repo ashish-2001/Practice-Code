@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const inventorySchema = new mongoose.Schema({
 
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",
