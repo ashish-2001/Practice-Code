@@ -26,8 +26,8 @@ async function createMessage(req, res){
             firstName,
             lastName,
             email,
-            message,
-            contactNumber
+            contactNumber,
+            message
         } = parsedResult.data;
 
         if(contactNumber !== 10 ){
@@ -51,6 +51,7 @@ async function createMessage(req, res){
             firstName,
             lastName,
             email,
+            contactNumber,
             message,
             user: userId
         });
@@ -73,7 +74,7 @@ async function getAllMessages(req, res){
 
     try{
 
-        const messages = await Contact.find({}).populate("user", "firstName lastName email message").sort({
+        const messages = await Contact.find({}).populate("user", "firstName lastName email contactNumber message").sort({
             createdAt: -1
         });
 
