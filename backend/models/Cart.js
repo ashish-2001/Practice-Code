@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import z from "zod";
 
-const cartSchema = z.object({
+const cartSchema = new mongoose.Schema({
 
     user: {
         type: mongoose.Schema.Types.ObjectId,
