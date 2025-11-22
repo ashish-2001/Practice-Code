@@ -366,5 +366,6 @@ export {
     createCoupon,
     updateCoupon,
     deleteCoupon,
+    getAllCoupons,
     applyCoupon
 }
