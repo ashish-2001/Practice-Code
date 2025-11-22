@@ -365,5 +365,6 @@ async function applyCoupon(req, res){
 export {
     createCoupon,
     updateCoupon,
-    deleteCoupon
+    deleteCoupon,
+    applyCoupon
 }
