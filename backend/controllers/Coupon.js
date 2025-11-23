@@ -303,8 +303,8 @@ async function applyCoupon(req, res){
             return res.status(404).json({
                 success: false,
                 message: "Coupon not found!"
-            })
-        }
+            });
+        };
 
         if(new Date(coupon.expiry) < new Date()){
             return res.status(400).json({
@@ -318,7 +318,7 @@ async function applyCoupon(req, res){
                 success: false,
                 message: "This coupon is no longer active!"
             });
-        }
+        };
 
         if(String(coupon.product) !== String(productId)){
             return res.status(403).json({
@@ -331,8 +331,8 @@ async function applyCoupon(req, res){
             return res.status(400).json({
                 success: false,
                 message: `Minimum order amount must be ₹${coupon.minOrderAmount}`
-            })
-        }
+            });
+        };
 
         let discount = 0;
 
@@ -340,11 +340,11 @@ async function applyCoupon(req, res){
             discount = coupon.discountValue;
         } else{
             discount = (orderAmount * coupon.discountValue)/100;
-        }
+        };
 
         if(coupon.maxDiscount && discount > coupon.discountValue){
             discount = coupon.maxDiscount;
-        }
+        };
 
         const finalAmount = orderAmount - discount;
 
@@ -358,9 +358,9 @@ async function applyCoupon(req, res){
             success: false,
             message: "Internal server error!",
             error: error.message
-        })
-    }
-}
+        });
+    };
+};
 
 export {
     createCoupon,
