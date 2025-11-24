@@ -439,5 +439,6 @@ export {
     signup,
     sendOtp,
     signin,
-    changePassword
+    changePassword,
+    adminDashboard
 }
