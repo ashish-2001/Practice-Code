@@ -181,6 +181,28 @@ async function getAllInventory(req, res){
     }
 }
 
+async function getSellerInventory(req, res){
+
+    try{
+        const sellerId = req.params._id;
+
+        const inventoryLogs = await Inventory.findById({ createdBy: sellerId }).populate("product").sort({ editedAt: -1 });
+
+        return res.status(200).json({
+            success: true,
+            message: "Seller data fetched successfully!",
+            inventoryLogs
+        });
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        });
+    };
+
+}
+
 async function editInventory(req, res){
     
     const inventoryId = req.params.id;
@@ -194,7 +216,7 @@ async function editInventory(req, res){
         });
     };
 
-    const { product, change, reason } = parsedResult.data;
+    const { change, reason } = parsedResult.data;
 
     const oldInventory = await Inventory.findById(inventoryId);
 
@@ -218,7 +240,7 @@ async function editInventory(req, res){
         if(String(productData.createdBy) !== String(req.user._id)){
             return res.status(403).json({
                 success: false,
-                message: "You can not delete another seller's inventory!"
+                message: "You can not edit another seller's inventory!"
             });
         }
     }
@@ -256,13 +278,6 @@ async function editInventory(req, res){
 
     await productData.save();
 
-    oldInventory.product = product;
-    oldInventory.reason = reason;
-    oldInventory.change = change;
-    oldInventory.editedAt = new Date();
-
-    await oldInventory.save();
-
     return res.status(200).json({
         success: false,
         message: "Inventory updated successfully!"
@@ -272,5 +287,6 @@ async function editInventory(req, res){
 export {
     createInventory,
     getAllInventory,
+    getSellerInventory,
     editInventory
 }
