@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { User } from "../models/User";
 import { Coupon } from "../models/Coupon";
 import { Product } from "../models/Product";
@@ -109,7 +109,7 @@ async function createCoupon(req, res){
     }
 }
 
-async function updateCoupon(req, res){
+async function editCoupon(req, res){
 
     try{
         const couponId = req.params.id;
@@ -364,7 +364,7 @@ async function applyCoupon(req, res){
 
 export {
     createCoupon,
-    updateCoupon,
+    editCoupon,
     deleteCoupon,
     getAllCoupons,
     applyCoupon
