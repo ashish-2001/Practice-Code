@@ -5,7 +5,8 @@ const addressSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: true,
+        index: true
     },
 
     fullName: {
@@ -18,15 +19,21 @@ const addressSchema = new mongoose.Schema({
         required: true
     },
 
-    pinCode: {
-        type: Number,
-        required: true
+    addressLine1: {
+        type: String,
+        required: true,
+        trim: true
     },
 
-    street: {
+    addressLine2: {
         type: String,
-        required: true
-    }, 
+        trim: true
+    },
+
+    landMark: {
+        type: String,
+        trim: true
+    },
 
     city: {
         type: String,
@@ -41,7 +48,24 @@ const addressSchema = new mongoose.Schema({
     country: {
         type: String,
         required: true
+    },
+
+    pinCode: {
+        type: Number,
+        required: true
+    },
+
+    addressType: {
+        type: String,
+        enum: ["Home", "Work"],
+        default: "Home"
+    },
+
+    isDefault: {
+        type: Boolean,
+        default: false
     }
+    
 }, { timestamps: true });
 
 const Address = mongoose.model("Address", addressSchema);
