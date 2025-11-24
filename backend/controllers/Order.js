@@ -1,8 +1,8 @@
-import { success } from "zod";
 import { Address } from "../models/Address";
 import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
 import { Order } from "../models/Order";
+import PDFDocument from "pdfkit";
 
 async function createOrder(req, res){
 
@@ -371,7 +371,7 @@ async function generateInvoice(req, res){
             });
         };
 
-        const doc = new PDFDocument();
+        const doc = new PDFDocument()
         const filePath = `invoices/invoice_${order._id}.pdf`;
 
         const writeStream = fs.createWriteStream(filePath);
@@ -409,5 +409,10 @@ async function generateInvoice(req, res){
 
 export {
     createOrder,
-    cancelOrders
+    cancelOrders,
+    getAllOrders,
+    getSellerOrders,
+    getMyOrders,
+    updateOrderStatus,
+    generateInvoice
 }
