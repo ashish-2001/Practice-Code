@@ -23,6 +23,11 @@ const inventorySchema = new mongoose.Schema({
         type: String,
         enum: ["Purchase", "Order Cancelled", "Stock update"],
         required: true
+    },
+
+    editedAt: {
+        type: Date,
+        default: null
     }
 });
 

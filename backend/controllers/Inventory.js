@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
 import { User } from "../models/User";
@@ -15,7 +15,7 @@ async function createInventory(req, res){
 
         const parsedResult = inventoryValidator.safeParse(req.body);
 
-        if(parsedResult.success){
+        if(!parsedResult.success){
             return res.status(403).json({
                 success: false,
                 message: "All fields are required!"
@@ -181,8 +181,85 @@ async function getAllInventory(req, res){
     }
 }
 
+async function editInventory(req, res){
+    
+    const inventoryId = req.params.id;
+
+    const oldInventory = await Inventory.findById(inventoryId);
+
+    if(!oldInventory){
+        return res.status(400).json({
+            success: false,
+            message: "Inventory not found!"
+        });
+    };
+
+    const productData = await Product.findById(oldInventory.product);
+
+    if(!productData){
+        return res.status(403).json({
+            success: false,
+            message: "Product not found!"
+        });
+    };
+
+    if(req.user.role === "Seller"){
+        if(String(productData.createdBy) !== String(req.user._id)){
+            return res.status(403).json({
+                success: false,
+                message: "You can not delete another seller's inventory!"
+            });
+        }
+    }
+
+    if(oldInventory.reason == "Purchase"){
+        productData.productStock += oldInventory.change;
+    }
+
+    if(oldInventory.reason === "Order Cancelled"){
+        productData.productStock -= productData.change
+    }
+
+    if(oldInventory.reason == "Stock update"){
+        productData.productStock -= productData.change
+    }
+
+    if(reason == "Purchase"){
+        productData.productStock -= change
+    }
+
+    if(reason == "Order Cancelled"){
+        productData.productStock += change
+    }
+
+    if(reason == "Stock update"){
+        productData.productStock += change
+    };
+
+    if(productData.productStock < 0){
+        return res.status(404).json({
+            success: false,
+            message: "Product stock can not be negative!"
+        });
+    };
+
+    await productData.save();
+
+    oldInventory.product = product;
+    oldInventory.reason = reason;
+    oldInventory.change = change;
+    oldInventory.editedAt = new Data();
+
+    await oldInventory.save();
+
+    return res.status(200).json({
+        success: false,
+        message: "Inventory updated successfully!"
+    });
+}
 
 export {
     createInventory,
-    getAllInventory
+    getAllInventory,
+    editInventory
 }
