@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Address } from "../models/Address";
 
 const addressValidator = z.object({
