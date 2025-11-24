@@ -185,6 +185,17 @@ async function editInventory(req, res){
     
     const inventoryId = req.params.id;
 
+    const parsedResult = inventoryValidator.safeParse(req.body);
+
+    if(!parsedResult.success){
+        return res.status(403).json({
+            success: false,
+            message: "All fields are required!"
+        });
+    };
+
+    const { product, change, reason } = parsedResult.data;
+
     const oldInventory = await Inventory.findById(inventoryId);
 
     if(!oldInventory){
@@ -248,7 +259,7 @@ async function editInventory(req, res){
     oldInventory.product = product;
     oldInventory.reason = reason;
     oldInventory.change = change;
-    oldInventory.editedAt = new Data();
+    oldInventory.editedAt = new Date();
 
     await oldInventory.save();
 
