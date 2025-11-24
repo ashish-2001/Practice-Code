@@ -3,6 +3,7 @@ import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
 import { Order } from "../models/Order";
 import PDFDocument from "pdfkit";
+import fs from "fs";
 
 async function createOrder(req, res){
 
@@ -415,4 +416,4 @@ export {
     getMyOrders,
     updateOrderStatus,
     generateInvoice
-}
+};
