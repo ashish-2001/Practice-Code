@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
@@ -8,6 +8,7 @@ import otpGenerator from "otp-generator";
 import { ROLE_TYPE } from "../utils/constants.js";
 
 import dotenv from "dotenv";
+import { Order } from "../models/Order.js";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -375,6 +376,64 @@ async function changePassword(req, res){
         })
     }
 }
+
+async function adminDashboard(req, res){
+
+    try{
+
+        if(req.user.role !== "Admin"){
+            return res.status(404).json({
+                success: false,
+                message: "Unauthorized!"
+            });
+        };
+
+        const totalOrders = await Order.countDocuments();
+        const revenueResult = await Order.aggregate([
+            {
+                $match: {
+                    paymentStatus: "Paid"
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: {
+                        $sum: "$totalAmount"
+                    }
+                }
+            }
+        ]);
+
+        const totalRevenue = revenueResult[0]?.totalRevenue || 0;
+
+        const pendingDeliveries = await Order.countDOcuments({
+            orderStatus: {
+                $in: ["Processing", "Shipped"]
+            }
+        });
+
+        const totalCustomers = await User.countDocuments({ role: "Customer" });
+        const totalSellers = await User.countDocuments({ role: "Seller" });
+
+        return res.status(200).json({
+            success: true,
+            message: "Data fetched successfully!",
+            totalOrders,
+            totalCustomers,
+            totalRevenue,
+            totalSellers,
+            pendingDeliveries
+        });
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Failed to load dashboard metrics!",
+            error: error.message
+        })
+    }
+}
+
 
 export {
     signup,
