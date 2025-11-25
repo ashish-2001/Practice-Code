@@ -1,9 +1,8 @@
 import express from "express";
-import { auth, isAdmin, isSeller, isCustomer } from "../middlewares/auth";
-import Router from "express";
-import { createProduct, deleteProduct, editProducts, getAllProducts, getSellerProducts, searchProduct } from "../controllers/Product";
-import { addProductToCategory, categoryPageDetails, createCategory, showAllCategories } from "../controllers/Category";
-import { createRatingAndReview, getAllRatingAndReviews, getAverageRating } from "../controllers/RatingAndReviews";
+import { auth, isAdmin, isSeller, isCustomer } from "../middlewares/auth.js";
+import { createProduct, deleteProduct, editProducts, getAllProducts, getSellerProducts, searchProduct } from "../controllers/Product.js";
+import { addProductToCategory, categoryPageDetails, createCategory, showAllCategories } from "../controllers/Category.js";
+import { createRatingAndReview, getAllRatingAndReviews, getAverageRating } from "../controllers/RatingAndReviews.js";
 
 const router = express.Router();
 
