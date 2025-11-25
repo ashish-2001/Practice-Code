@@ -22,8 +22,8 @@ router.get("/getAvgRating", getAverageRating);
 router.get("/getAllRatingAndReviews", getAllRatingAndReviews);
 
 router.get("/getAllProducts", getAllProducts);
-
 router.get("/searchCourse", searchProduct);
+
 export {
     router
 }
