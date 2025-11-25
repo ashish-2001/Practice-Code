@@ -11,7 +11,8 @@ const addressValidator = z.object({
     state: z.string().min(2),
     country: z.string().min(6),
     addressType: z.enum(["Home", "Work"]).default("Home"),
-    isDefault: z.boolean().optional()
+    isDefault: z.boolean().optional(),
+    pinCode: z.string().min(6).max(6)
 });
 
 async function createAddress(req, res){
