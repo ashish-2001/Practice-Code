@@ -1,4 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
+dotenv.config();
 
 function cloudinaryConnect(){
 
@@ -13,7 +15,7 @@ function cloudinaryConnect(){
 
     } catch(error){
         return error;
-    }
+    };
 };
 
 export {
