@@ -89,7 +89,6 @@ async function createCategory(req, res){
 };
 
 async function showAllCategories(req, res){
-
     try{
         const allCategories = await Category.find({}, {
             categoryName: true,
