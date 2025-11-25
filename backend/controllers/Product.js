@@ -334,7 +334,6 @@ async function searchProduct(req, res){
             error
         });
     };
-
 }
 
 
