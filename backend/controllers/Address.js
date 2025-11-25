@@ -67,7 +67,7 @@ async function createAddress(req, res){
             isDefault: data.isDefault || false
         });
 
-        return res.sta(200).json({
+        return res.status(200).json({
             success: true,
             message: "Address created successfully!",
             address
