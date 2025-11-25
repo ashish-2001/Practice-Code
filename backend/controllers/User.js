@@ -76,17 +76,17 @@ async function signup(req, res){
         const otpRecord = await Otp.findOne({
             email,
             role,
-            otp: otp.toString()
+            otp
         });
 
         if(!otpRecord){
             return res.status(404).json({
                 success: false,
-                message: "Otp not found!"
+                message: "Otp is invalid!"
             });
         }
 
-        if(otpRecord.expiresAt < Date.now()){
+        if(otpRecord.expiresAt < new Date()){
             return res.status(400).json({
                 success: false,
                 message: "Otp expired!"
@@ -100,7 +100,6 @@ async function signup(req, res){
             lastName,
             email,
             password: hashedPassword,
-            profileImage: req.files.profileImage || "",
             contactNumber,
             role
         });
@@ -145,7 +144,7 @@ async function sendOtp(req, res){
         if(!parsedResult.success){
             return res.status(404).json({
                 success: false,
-                message: "All fields are required!"
+                message: "Email is required!"
             });
         };
 
@@ -185,19 +184,18 @@ async function sendOtp(req, res){
             email,
             otp,
             role,
-            createdAt: Date.now(),
-            expiresAt: Date.now() + 5 * 60 * 1000
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000)
         });
 
         return res.status(200).json({
             success: true,
-            message: "Otp sent email successfully!"
+            message: "Otp sent to email successfully!"
         });
     } catch(error){
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
-            error
+            error: error.message
         });
     };
 }
