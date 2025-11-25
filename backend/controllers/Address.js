@@ -15,6 +15,20 @@ const addressValidator = z.object({
     pinCode: z.string().min(6).max(6)
 });
 
+const updateAddressValidator = z.object({
+    fullName: z.string().min(3, "Full name is required!"),
+    contactNumber: z.string().min(10).max(12),
+    addressLine1: z.string().min(3),
+    addressLine2: z.string().min(3),
+    landMark: z.string().optional(),
+    city: z.string().min(2),
+    state: z.string().min(2),
+    country: z.string().min(6),
+    addressType: z.enum(["Home", "Work"]).default("Home"),
+    isDefault: z.boolean().optional(),
+    pinCode: z.string().min(6).max(6)
+});
+
 async function createAddress(req, res){
 
     try{
@@ -165,9 +179,127 @@ async function getUserAddress(req, res){
     }
 }
 
+async function updateAddress(req, res){
+
+    try{
+        if(req.user.role !== "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Only customer can update address!"
+            });
+        };
+
+        const parsedResult = updateAddressValidator.safeParse(req.body);
+
+        if(!parsedResult.success){
+            return res.status(403).json({
+                success: false,
+                message: "All fields are required!"
+            });
+        };
+
+        const data = parsedResult.data;
+
+        const address = await Address.findOne({
+            _id: req.params.id,
+            user: req.user._id
+        });
+
+        if(!address){
+            return res.status(404).json({
+                success: false,
+                message: "Address not found!"
+            })
+        }
+
+        if(data.isDefault === true){
+            await Address.updateMany(
+                {
+                    user: req.user._id
+                },
+                {
+                    $set: {
+                        isDefault: false
+                    }
+                }
+            );
+        };
+
+        Object.assign.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Address updated successfully!",
+            address
+        })
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        })
+    }
+}
+
+async function deleteAddress(req, res){
+
+    try{
+        if(req.user.role !== "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Only customer can delete his own address!"
+            });
+        };
+
+        const userId = req.user._id;
+
+        const addressId = req.params.id;
+
+        const address = await Address.findOne({
+            _id: addressId,
+            user: userId
+        });
+
+        if(!address){
+            return res.status(404).json({
+                success: false,
+                message: "Address not found!"
+            });
+        };
+
+        const isDefaultAddress = address.isDefault;
+
+        await Address.findByIdAndDelete(addressId);
+
+        if(isDefaultAddress){
+            const anotherAddress = await Address.findOne({
+                user: userId 
+            }).sort({ createdAt: -1 });
+
+            if(anotherAddress){
+                anotherAddress.isDefault = true;
+                await anotherAddress.save()
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Address deleted successfully!"
+        });
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        });
+    }
+}
+
 export {
     createAddress,
     getAllAddress,
     getSingleAddress,
-    getUserAddress
+    getUserAddress,
+    updateAddress,
+    deleteAddress
 }
