@@ -1,6 +1,6 @@
 import z from "zod";
-import { Category } from "../../shared/models/Category.js";
-import { Product } from "../../shared/models/Product.js";
+import { Category } from "../models/Category.js";
+import { Product } from "../models/Product.js";
 import { uploadImageToCloudinary } from "../utils/imageUploader.js";
 
 const categoryValidator = z.object({

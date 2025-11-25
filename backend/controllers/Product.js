@@ -1,8 +1,8 @@
 import z from "zod";
-import { Category } from "../../../../shared/models/Category.js";
-import { Product } from "../../../../shared/models/Product.js";
-import { User } from "../../../../shared/models/User.js";
-import { uploadImageToCloudinary } from "../../../../shared/utils/imageUploader.js";
+import { Category } from "../models/Category.js";
+import { Product } from "../models/Product.js";
+import { User } from "../models/User.js";
+import { uploadImageToCloudinary } from "../utils/imageUploader.js";
 
 const productValidator = z.object({
     productName: z.string().min(1, "Product name is required!"),
