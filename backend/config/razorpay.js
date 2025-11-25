@@ -9,4 +9,4 @@ let instance = new Razorpay({
 
 export {
     instance
-}
+};
