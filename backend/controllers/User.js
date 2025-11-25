@@ -27,8 +27,7 @@ const signupValidator = z.object({
     contactNumber: z.string().regex(/^(\+91)?[6-9]\d{9}$/, "Please enter a valid contact number!"),
     password: z.string().min(6, "Password must be of at least 6 characters!"),
     confirmPassword: z.string().min(6, "Confirm Password must be of at least 6 characters!"),
-    otp: z.string().min(6, "Otp is required!"),
-    profileImage: z.string().optional(),
+    otp: z.string().length(6, "Otp must be digits")
 });
 
 async function signup(req, res){
@@ -111,9 +110,6 @@ async function signup(req, res){
             role: user.role,
             email: user.email
         }, JWT_SECRET);
-
-        user.token = token;
-        user.password = undefined;
 
         return res.status(200).json({
             success:true,
