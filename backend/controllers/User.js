@@ -5,7 +5,6 @@ import { mailSender } from "../utils/mailSender.js";
 import bcrypt from "bcrypt";
 import { Otp } from "../models/Otp.js";
 import otpGenerator from "otp-generator";
-import { ROLE_TYPE } from "../utils/constants.js";
 
 import dotenv from "dotenv";
 import { Order } from "../models/Order.js";
