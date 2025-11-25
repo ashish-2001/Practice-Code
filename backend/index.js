@@ -2,6 +2,9 @@ import express, { urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
+import { router as userRoute } from "./routes/userRoutes.js"
+import { router as productRoute } from "./routes/productRoute.js"
+import { router as contactRoute } from "./routes/contactRoutes.js";
 import { databaseConnect } from "./config/database.js";
 import dotenv from "dotenv";
 import { cloudinaryConnect } from "./config/cloudinary.js";
@@ -40,6 +43,10 @@ app.use(urlencoded({
 app.use(cookieParser());
 
 cloudinaryConnect();
+
+app.use("/api/v1/auth", userRoute);
+app.use("/api/v1/product", productRoute);
+app.use("/api/v1/contact", contactRoute);
 
 app.get("/", (req, res) => {
     return res.status(200).json({
