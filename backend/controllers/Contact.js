@@ -6,7 +6,7 @@ const contactValidator = z.object({
     firstName: z.string().min(1, "First name is required!"),
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Email format is not correct!"),
-    contactNumber: z.number().min(10, "Contact number is not correct!"),
+    contactNumber: z.string().regex(/^\d+$/, "Contact number must contain only digits").length(10, "Contact number must be exactly 10 digits!"),
     message: z.string().min(1, "Message is required!")
 });
 
@@ -37,7 +37,7 @@ async function createMessage(req, res){
             })
         }
 
-        const userId = req.user?.userId;
+        const userId = req.user?._id;
 
         const user = await User.findById(userId);
 
@@ -47,6 +47,7 @@ async function createMessage(req, res){
                 message: "User not found!"
             });
         };
+
         const contactMessage = await Contact.create({
             firstName,
             lastName,
@@ -74,7 +75,15 @@ async function getAllMessages(req, res){
 
     try{
 
-        const messages = await Contact.find({}).populate("user", "firstName lastName email contactNumber message").sort({
+        if(req.user.role !== "Admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admin can view all the messages!"
+            });
+        }
+
+        const messages = await Contact.find({})
+        .populate("user", "firstName lastName email contactNumber message").sort({
             createdAt: -1
         });
 
@@ -92,9 +101,16 @@ async function getAllMessages(req, res){
     };
 };
 
-async function updateMessages(req, res){
+async function updateMessageStatus(req, res){
 
     try{
+
+        if(req.user.role !== "Admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admins can update message status!"
+            })
+        }
         const { messageId } = req.params;
         const { status } = req.body;
 
@@ -105,7 +121,16 @@ async function updateMessages(req, res){
             });
         };
 
-        const updatedMessages = await Contact.findByIdAndUpdate(
+        const allowedStatus = ["Pending", "Resolved"];
+
+        if(!allowedStatus.includes(status)){
+            return res.status(403).json({
+                success: false,
+                message: "Invalid status!"
+            })
+        }
+
+        const updatedMessageStatus = await Contact.findByIdAndUpdate(
             messageId,
             {
                 status
@@ -115,23 +140,23 @@ async function updateMessages(req, res){
             }
         );
 
-        if(!updatedMessages){
+        if(!updatedMessageStatus){
             return res.status(402).json({
                 success: false,
-                message: "Message could not be updated!"
+                message: "Message status could not be updated!"
             })
         }
 
         return res.status(200).json({
             success: true,
-            message: "Message updated successfully!",
-            data: updatedMessages
+            message: "Message status updated successfully!",
+            data: updatedMessageStatus
         })
     } catch(error){
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
-            error
+            error: error.message
         });
     };
 
@@ -140,5 +165,5 @@ async function updateMessages(req, res){
 export {
     createMessage,
     getAllMessages,
-    updateMessages
+    updateMessageStatus
 }
