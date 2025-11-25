@@ -4,25 +4,26 @@ import { mailSender } from "../utils/mailSender.js";
 
 const otpSchema = new mongoose.Schema({
     otp: {
-        type: String,
-        required: true  
+        type: String 
     },
 
     email: {
-        type: String,
-        required: true
+        type: String
     },
 
     role: {
         type: String,
-        enum: ["Admin", "Seller", "Customer"],
-        required: true
+        enum: ["Admin", "Seller", "Customer"]
     }, 
+
+    expiresAt: {
+        type: Date,
+        required: true
+    },
 
     createdAt: {
         type: Date,
-        default: Date.now,
-        expires: 60 * 5
+        default: Date.now
     }
 });
 

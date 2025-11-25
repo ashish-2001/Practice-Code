@@ -13,9 +13,9 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 function detectRole(req){
-    const host = (req.headers.origin || req.headers.host || req.hostname || "").toString().toLowerCase();
-    if(host.includes("http://localhost:5000/admin")) return "Admin";
-    if(host.includes("http://localhost:5001/seller")) return "Seller";
+    const origin = (req.headers.origin || "").toLowerCase();
+    if(origin.includes("admin")) return "Admin";
+    if(origin.includes("seller")) return "Seller";
     return "Customer";
 }
 
@@ -26,7 +26,7 @@ const signupValidator = z.object({
     contactNumber: z.string().regex(/^(\+91)?[6-9]\d{9}$/, "Please enter a valid contact number!"),
     password: z.string().min(6, "Password must be of at least 6 characters!"),
     confirmPassword: z.string().min(6, "Confirm Password must be of at least 6 characters!"),
-    otp: z.string().length(6, "Otp must be digits")
+    otp: z.string().min(6, "Otp is required!")
 });
 
 async function signup(req, res){
@@ -52,7 +52,7 @@ async function signup(req, res){
             otp
         } = parsedResult.data;
 
-        const role = detectRole(req);
+        const role = req.body.role || "Customer"
 
         if(password !== confirmPassword){
             return res.status(404).json({
@@ -60,8 +60,6 @@ async function signup(req, res){
                 message: "Password and confirm password should match!"
             })
         }
-
-        const profileImage = req.files?.profileImage || "";
 
         const existingUser = await User.findOne({
             email,
@@ -81,12 +79,19 @@ async function signup(req, res){
             otp: otp.toString()
         });
 
-        if(!otpRecord || otpRecord.otp !== otp.toString()){
+        if(!otpRecord){
             return res.status(404).json({
                 success: false,
-                message: "Otp is invalid!"
+                message: "Otp not found!"
             });
         }
+
+        if(otpRecord.expiresAt < Date.now()){
+            return res.status(400).json({
+                success: false,
+                message: "Otp expired!"
+            });
+        };
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -95,7 +100,7 @@ async function signup(req, res){
             lastName,
             email,
             password: hashedPassword,
-            profileImage,
+            profileImage: req.files.profileImage || "",
             contactNumber,
             role
         });
@@ -109,6 +114,8 @@ async function signup(req, res){
             role: user.role,
             email: user.email
         }, JWT_SECRET);
+
+        user.password = undefined;
 
         return res.status(200).json({
             success:true,
@@ -144,7 +151,7 @@ async function sendOtp(req, res){
 
         const { email } = parsedResult.data;
 
-        const role = detectRole(req);
+        const role = req.body.role || "Customer"
 
         const checkUserPresent = await User.findOne({
             email,
@@ -165,8 +172,7 @@ async function sendOtp(req, res){
             otp = otpGenerator.generate(6, {
                 upperCaseAlphabets: false,
                 lowerCaseAlphabets: false,
-                specialChars: false,
-                digits: false
+                specialChars: false
             });
 
             otpExists = await Otp.findOne({
@@ -178,7 +184,9 @@ async function sendOtp(req, res){
         await Otp.create({
             email,
             otp,
-            role
+            role,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + 5 * 60 * 1000
         });
 
         return res.status(200).json({
