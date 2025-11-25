@@ -12,7 +12,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "pdfkit": "^0.17.2"
+    "pdfkit": "^0.17.2",
+    "razorpay": "^2.9.6"
   }
 }
