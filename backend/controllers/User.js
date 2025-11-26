@@ -84,7 +84,7 @@ async function signup(req, res){
                 success: false,
                 message: "Otp is invalid!"
             });
-        }
+        };
 
         if(otpRecord.expiresAt < new Date()){
             return res.status(400).json({
@@ -198,7 +198,7 @@ async function sendOtp(req, res){
             error: error.message
         });
     };
-}
+};
 
 const signinValidator = z.object({
     email: z.string().email("Email format is incorrect!"),
