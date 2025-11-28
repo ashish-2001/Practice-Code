@@ -52,7 +52,7 @@ async function signup(req, res){
             otp
         } = parsedResult.data;
 
-        const role = req.body.role || "Customer"
+        const role = req.body.role?.trim() || detectRole(req);
 
         if(password !== confirmPassword){
             return res.status(404).json({
@@ -150,7 +150,7 @@ async function sendOtp(req, res){
 
         const { email } = parsedResult.data;
 
-        const role = req.body.role || "Customer"
+        const role = req.body.role.trim() || detectRole(req);
 
         const checkUserPresent = await User.findOne({
             email,
@@ -189,7 +189,8 @@ async function sendOtp(req, res){
 
         return res.status(200).json({
             success: true,
-            message: "Otp sent to email successfully!"
+            message: "Otp sent to email successfully!",
+            otp
         });
     } catch(error){
         return res.status(500).json({
@@ -222,7 +223,7 @@ async function signin(req, res){
             password
         } = parsedResult.data;
 
-        const role = detectRole(req);
+        const role = req.body.role.trim() || detectRole(req);
 
         const user = await User.findOne({
             email,
