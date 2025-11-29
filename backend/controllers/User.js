@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import { Otp } from "../models/Otp.js";
 import otpGenerator from "otp-generator";
 
-import dotenv from "dotenv";
+import dotenv, { parse } from "dotenv";
 import { Order } from "../models/Order.js";
 dotenv.config();
 
@@ -14,8 +14,12 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 function detectRole(req){
     const origin = (req.headers.origin || "").toLowerCase();
-    if(origin.includes("admin")) return "Admin";
-    if(origin.includes("seller")) return "Seller";
+    const host = (req.headers.host || "").toLowerCase();
+
+    const target = host || origin;
+
+    if(target.includes("admin-prarabdh.in") || target.includes("admin")) return "Admin";
+    if(target.includes("seller-prarabdh.in") || target.includes("seller")) return "Seller";
     return "Customer";
 }
 
@@ -38,7 +42,7 @@ async function signup(req, res){
         if(!parsedResult.success){
             return res.status(404).json({
                 success: false,
-                message: "All fields are required!"
+                message: parsedResult.error.errors[0]?.message || "All fields are required!";
             });
         };
 
@@ -52,7 +56,7 @@ async function signup(req, res){
             otp
         } = parsedResult.data;
 
-        const role = req.body.role?.trim() || detectRole(req);
+        const role = (req.body.role && String(req.body.role)?.trim().toLowerCase()) || detectRole(req);
 
         if(password !== confirmPassword){
             return res.status(404).json({
@@ -104,8 +108,8 @@ async function signup(req, res){
             role
         });
 
-        await Otp.deleteOne({
-            _id: otpRecord._id
+        await Otp.deleteMany({
+            email, role 
         });
 
         const token = jwt.sign({
@@ -115,6 +119,12 @@ async function signup(req, res){
         }, JWT_SECRET);
 
         user.password = undefined;
+
+        res.cookie("token", token, {
+            expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+            httpOnly: true,
+            sameSite: "lax"
+        })
 
         return res.status(200).json({
             success:true,
@@ -150,7 +160,7 @@ async function sendOtp(req, res){
 
         const { email } = parsedResult.data;
 
-        const role = req.body.role.trim() || detectRole(req);
+        const role = (req.body.role && String(req.body.role).trim().toLowerCase()) || detectRole(req);
 
         const checkUserPresent = await User.findOne({
             email,
@@ -180,11 +190,18 @@ async function sendOtp(req, res){
             });
         } while( otpExists );
 
+        await Otp.deleteMany({
+            email,
+            role 
+        });
+
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+
         await Otp.create({
             email,
             otp,
             role,
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+            expiresAt
         });
 
         return res.status(200).json({
@@ -223,7 +240,7 @@ async function signin(req, res){
             password
         } = parsedResult.data;
 
-        const role = req.body.role.trim() || detectRole(req);
+        const role = (req.body.role && String(req.body.role).trim().toLowerCase()) || detectRole(req);
 
         const user = await User.findOne({
             email,
@@ -257,7 +274,8 @@ async function signin(req, res){
 
         res.cookie("token", token, {
             expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-            httpOnly: true
+            httpOnly: true,
+            sameSite: "lax"
         });
         
         return res.status(200).json({
@@ -289,7 +307,7 @@ async function changePassword(req, res){
         if(!parsedResult.success){
             return res.status(404).json({
                 success: false,
-                message: "All fields are required!" 
+                message: parsedResult.error.errors[0]?.message || "All fields are required!" 
             });
         };
 
