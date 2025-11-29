@@ -30,7 +30,7 @@ async function createMessage(req, res){
             message
         } = parsedResult.data;
 
-        if(contactNumber !== 10 ){
+        if(contactNumber.length !== 10 ){
             return res.status(403).json({
                 success: false,
                 message: "Contact number is invalid!"
@@ -83,7 +83,7 @@ async function getAllMessages(req, res){
         }
 
         const messages = await Contact.find({})
-        .populate("user", "firstName lastName email contactNumber message").sort({
+        .populate("user", "firstName lastName email contactNumber").sort({
             createdAt: -1
         });
 
@@ -106,7 +106,7 @@ async function updateMessageStatus(req, res){
     try{
 
         if(req.user.role !== "Admin"){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "Only admins can update message status!"
             })
@@ -115,7 +115,7 @@ async function updateMessageStatus(req, res){
         const { status } = req.body;
 
         if(!status){
-            return res.status(400).json({
+            return res.status(404).json({
                 success: false,
                 message: "Status is required!"
             });
