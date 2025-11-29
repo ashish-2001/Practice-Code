@@ -196,7 +196,7 @@ async function addProductToCategory(req, res){
         const category = await Category.findById(categoryId);
 
         if(!category){
-            return res.status(401).json({
+            return res.status(404).json({
                 success: false,
                 message: "Category not found!"
             });
@@ -205,14 +205,14 @@ async function addProductToCategory(req, res){
         const product = await Product.findById(productId);
 
         if(!product){
-            return res.status(401).json({
+            return res.status(404).json({
                 success: false,
                 message: "Product not found!"
             });
         };
 
         if(category.products.includes(productId)){
-            return res.status(402).json({
+            return res.status(409).json({
                 success: false,
                 message: "Product already exists in the category!"
             });
