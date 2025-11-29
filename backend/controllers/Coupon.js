@@ -5,7 +5,7 @@ import { Product } from "../models/Product";
 import { Category } from "../models/Category";
 
 const couponValidator = z.object({
-    code: z.string().min(5).max(10).transform(val => val.toUpperCase()).refine(val => /^[A-Z0-9]+$/.text(val), {
+    code: z.string().min(5).max(10).transform(val => val.toUpperCase()).refine(val => /^[A-Z0-9]+$/.test(val), {
         message: "Coupon can contain only A-Z and 0-9"
     }),
     product: z.string().min(1, "Product is required!"),
@@ -23,7 +23,7 @@ async function createCoupon(req, res){
     try{
 
         if(req.user.role === "Customer"){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "Customer cannot create coupon!"
             });
@@ -32,7 +32,7 @@ async function createCoupon(req, res){
         const parsedResult = couponValidator.safeParse(req.body);
 
         if(!parsedResult.success){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "All fields are required!"
             });
@@ -63,7 +63,7 @@ async function createCoupon(req, res){
         };
 
         if(String(productData.category) !== String(category)){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "This product does not belong to the selected category!"
             })
@@ -71,7 +71,7 @@ async function createCoupon(req, res){
 
         if(req.user.role === "Seller"){
             if(String(productData.createdBy) !== String(req.user._id)){
-                return res.status(403).json({
+                return res.status(400).json({
                     success: false,
                     message: "You cannot create coupon for  another seller's product!"
                 })
@@ -84,7 +84,7 @@ async function createCoupon(req, res){
         });
 
         if(already){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "Coupon has been already created for this product!"
             });
@@ -95,7 +95,7 @@ async function createCoupon(req, res){
             createdBy: req.user._id
         });
 
-        return req.status(200).json({
+        return res.status(200).json({
             success: true,
             message: "Coupon created successfully!",
             coupon
@@ -115,7 +115,7 @@ async function editCoupon(req, res){
         const couponId = req.params.id;
 
         if(req.user.role === "Customer"){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "Customer cannot create coupon!"
             });
@@ -132,7 +132,7 @@ async function editCoupon(req, res){
 
         if(req.user.role === "Seller"){
             if(String(coupon.createdBy) !== String(req.user._id)){
-                return res.status(403).json({
+                return res.status(400).json({
                     success: false,
                     message: "You can not update some one else coupon!"
                 });
@@ -142,7 +142,7 @@ async function editCoupon(req, res){
         const parsedResult = couponValidator.partial().safeParse(req.body);
 
         if(!parsedResult.success){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "All fields are required!"
             });
@@ -161,7 +161,7 @@ async function editCoupon(req, res){
             })
 
             if(exists){
-                return req.status(402).json({
+                return res.status(409).json({
                     success: false,
                     message: "This coupon code already exists!"
                 });
@@ -169,8 +169,8 @@ async function editCoupon(req, res){
         }
 
         if(updates.product || updates.category){
-            const productId = updates.product || updates.coupon;
-            const categoryId = updates.category || updates.coupon;
+            const productId = updates.product;
+            const categoryId = updates.category;
 
             const productData = await Product.findById(productId);
             const categoryData = await Category.findById(categoryId);
@@ -183,7 +183,7 @@ async function editCoupon(req, res){
             };
 
             if(String(productData.category) !== String(categoryId)){
-                return res.status(403).json({
+                return res.status(400).json({
                     success: false,
                     message: "The product does not belong to the selected category!"
                 });
@@ -191,7 +191,7 @@ async function editCoupon(req, res){
 
             if(req.user.role === "Seller"){
                 if(String(productData.createdBy) !== String(req.user._id)){
-                    return res.status(403).json({
+                    return res.status(400).json({
                         success: false,
                         message: "You cannot assign coupon to another's product!"
                     });
@@ -223,7 +223,7 @@ async function deleteCoupon(req, res){
         const couponId = req.params.id;
 
         if(req.user.role === "Customer"){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "Customer cannot delete coupon!"
             });
@@ -240,7 +240,7 @@ async function deleteCoupon(req, res){
 
         if(req.user.role === "Seller"){
             if(String(coupon.createdBy) !== String(req.user._id)){
-                return res.status(403).json({
+                return res.status(400).json({
                     success: false,
                     message: "You can not delete another's coupon!"
                 });
@@ -267,15 +267,8 @@ async function getAllCoupons(req, res){
     try{
         let coupons;
 
-        if(req.user.role !== "Admin"){
-            coupons = await Coupon.find().populate("product").populate("createdBy");
-        }
-        else if(req.user.role === "Seller"){
-            coupons = await Coupon.find({
-                createdBy: req.user._id
-            }).populate("product").populate("createdBy");
-        } else{
-            coupons = await Coupon.find({ active: true }).populate("product");
+        if("Admin"){
+            return all
         }
 
         return res.status(200).json({
@@ -321,7 +314,7 @@ async function applyCoupon(req, res){
         };
 
         if(String(coupon.product) !== String(productId)){
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "This coupon is not valid for this product!"
             });
@@ -342,7 +335,7 @@ async function applyCoupon(req, res){
             discount = (orderAmount * coupon.discountValue)/100;
         };
 
-        if(coupon.maxDiscount && discount > coupon.discountValue){
+        if(coupon.maxDiscount && discount > coupon.maxDiscount){
             discount = coupon.maxDiscount;
         };
 
