@@ -1,11 +1,11 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Address } from "../models/Address";
 
 const addressValidator = z.object({
     fullName: z.string().min(3, "Full name is required!"),
     contactNumber: z.string().min(10).max(12),
     addressLine1: z.string().min(3),
-    addressLine2: z.string().min(3),
+    addressLine2: z.string().optional(),
     landMark: z.string().optional(),
     city: z.string().min(2),
     state: z.string().min(2),
@@ -19,7 +19,7 @@ const updateAddressValidator = z.object({
     fullName: z.string().min(3, "Full name is required!"),
     contactNumber: z.string().min(10).max(12),
     addressLine1: z.string().min(3),
-    addressLine2: z.string().min(3),
+    addressLine2: z.string().optional(),
     landMark: z.string().optional(),
     city: z.string().min(2),
     state: z.string().min(2),
@@ -88,7 +88,7 @@ async function createAddress(req, res){
         });
     } catch(error){
         return res.status(500).json({
-            success: false,
+            success: true,
             message: "Internal server error!",
             error: error.message
         })
@@ -138,6 +138,13 @@ async function getSingleAddress(req, res){
             _id: req.params.id,
             user: req.user._id
         });
+
+        if(!address){
+            return res.status(404).json({
+                success: false,
+                message: "Address not found!"
+            })
+        }
 
         return res.status(200).json({
             success: true,
@@ -225,7 +232,7 @@ async function updateAddress(req, res){
             );
         };
 
-        Object.assign.save();
+        Object.assign(address, data);
 
         return res.status(200).json({
             success: true,
