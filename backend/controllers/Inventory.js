@@ -1,7 +1,8 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
 import { User } from "../models/User";
+import mongoose from "mongoose";
 
 const inventoryValidator = z.object({
     product: z.string().min(1, "Product id is required!"),
@@ -10,6 +11,9 @@ const inventoryValidator = z.object({
 })
 
 async function createInventory(req, res){
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
     try{
 
@@ -23,38 +27,28 @@ async function createInventory(req, res){
         };
 
         const {
-            product,
+            productId,
+            createdBy,
             reason,
             change
         } = parsedResult.data;
 
-        const userId = req.user._id;
+        const seller = await User.findById(createdBy).session(session);
 
-        const user = await User.findById(userId);
-
-        if(!user){
+        if(!seller){
             return res.status(404).json({
                 success: false,
-                message: "User not found!"
+                message: "Seller not found!"
             });
         };
 
-        const productData = await Product.findById(product);
+        const productData = await Product.findById(productId).session(session);
 
         if(!productData){
             return res.status(404).json({
                 success: false,
                 message: "Product not found!"
             });
-        };
-
-        if(req.user.role === "Seller"){
-            if(String(productData.createdBy) !== String(req.user._id)){
-                return res.status(403).json({
-                    success: false,
-                    message: "User cannot update another's product data!"
-                });
-            };
         };
 
         if(reason === "Purchase"){
@@ -70,38 +64,40 @@ async function createInventory(req, res){
         }
 
         if(productData.productStock < 0){
+            await session.abortTransaction();
             return res.status(403).json({
                 success: false,
-                message: "Product stock cannot be negative!"
+                message: "Stock cannot be negative!"
             });
         };
 
-        const inventoryLog = await Inventory.create({
-            createdBy: userId,
-            product,
+        await productData.save({ session });
+
+        const inventory = await Inventory.create([{
+            createdBy,
+            product: productId,
             reason,
             change
-        });
+        }], { session });
 
-        if(!inventoryLog){
-            return res.status(403).json({
-                success: false,
-                message: "Inventory not created!"
-            });
-        };
+        await session.commitTransaction();
 
         return res.status(200).json({
             success: true,
             message: "Inventory created successfully!",
-            inventory: inventoryLog,
+            inventory: inventory[0],
             product: productData
         });
     }catch(error){
+
+        await session.abortTransaction();
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
             error: error.message
         });
+    } finally{
+        session.endSession();
     };
 };
 
@@ -160,7 +156,7 @@ async function getAllInventory(req, res){
         }
 
         else{
-            return res.status(402).json({
+            return res.status(403).json({
                 success: false,
                 message: "YOu are not allowed to access inventory logs!"
             });
@@ -186,7 +182,7 @@ async function getSellerInventory(req, res){
     try{
         const sellerId = req.params._id;
 
-        const inventoryLogs = await Inventory.findById({ createdBy: sellerId }).populate("product").sort({ editedAt: -1 });
+        const inventoryLogs = await Inventory.find({ createdBy: sellerId }).populate("product").sort({ editedAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -203,85 +199,107 @@ async function getSellerInventory(req, res){
 
 }
 
+
 async function editInventory(req, res){
-    
-    const inventoryId = req.params.id;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const parsedResult = inventoryValidator.safeParse(req.body);
+    try{
+        const inventoryId = req.params.id;
 
-    if(!parsedResult.success){
-        return res.status(403).json({
-            success: false,
-            message: "All fields are required!"
-        });
-    };
+        const parsedResult = inventoryValidator.safeParse(req.body);
 
-    const { change, reason } = parsedResult.data;
+        if(!parsedResult.success){
+            return res.status(403).json({
+                success: false,
+                message: "All fields are required!"
+            });
+        };
 
-    const oldInventory = await Inventory.findById(inventoryId);
+        const { change, reason } = parsedResult.data;
 
-    if(!oldInventory){
-        return res.status(400).json({
-            success: false,
-            message: "Inventory not found!"
-        });
-    };
+        const oldInventory = await Inventory.findById(inventoryId).session(session);
 
-    const productData = await Product.findById(oldInventory.product);
+        if(!oldInventory){
+            return res.status(400).json({
+                success: false,
+                message: "Inventory not found!"
+            });
+        };
 
-    if(!productData){
-        return res.status(403).json({
-            success: false,
-            message: "Product not found!"
-        });
-    };
+        const productData = await Product.findById(oldInventory.product).session(session);
 
-    if(req.user.role === "Seller"){
-        if(String(productData.createdBy) !== String(req.user._id)){
+        if(!productData){
+            return res.status(403).json({
+                success: false,
+                message: "Product not found!"
+            });
+        };
+
+        if(req.user.role !== "Admin" && req.user._id.toString() !== oldInventory.createdBy.toString()){
             return res.status(403).json({
                 success: false,
                 message: "You can not edit another seller's inventory!"
             });
         }
-    }
 
-    if(oldInventory.reason == "Purchase"){
-        productData.productStock += oldInventory.change;
-    }
+        if(oldInventory.reason == "Purchase"){
+            productData.productStock += oldInventory.change;
+        }
 
-    if(oldInventory.reason === "Order Cancelled"){
-        productData.productStock -= productData.change
-    }
+        else if(oldInventory.reason === "Order Cancelled"){
+            productData.productStock -= oldInventory.change
+        }
 
-    if(oldInventory.reason == "Stock update"){
-        productData.productStock -= productData.change
-    }
+        else if(oldInventory.reason == "Stock update"){
+            productData.productStock -= productData.change
+        }
 
-    if(reason == "Purchase"){
-        productData.productStock -= change
-    }
+        if(reason == "Purchase"){
+            productData.productStock -= change
+        }
 
-    if(reason == "Order Cancelled"){
-        productData.productStock += change
-    }
+        else if(reason == "Order Cancelled"){
+            productData.productStock += change
+        }
 
-    if(reason == "Stock update"){
-        productData.productStock += change
-    };
+        else if(reason == "Stock update"){
+            productData.productStock += change
+        };
 
-    if(productData.productStock < 0){
-        return res.status(404).json({
-            success: false,
-            message: "Product stock can not be negative!"
+        if(productData.productStock < 0){
+            await session.abortTransaction();
+            return res.status(404).json({
+                success: false,
+                message: "Product stock can not be negative!"
+            });
+        };
+
+        await productData.save({ session });
+
+        oldInventory.change = change;
+        oldInventory.reason = reason;
+        oldInventory.editedAt = new Date()
+
+        await oldInventory.save({ session });
+        await session.commitTransaction();
+
+        return res.status(200).json({
+            success: true,
+            message: "Inventory updated successfully!",
+            product: productData,
+            inventory: oldInventory
         });
-    };
-
-    await productData.save();
-
-    return res.status(200).json({
-        success: false,
-        message: "Inventory updated successfully!"
-    });
+    } catch(error){
+        await session.abortTransaction();
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        });
+    } finally{
+        session.endSession();
+    }
 }
 
 export {
