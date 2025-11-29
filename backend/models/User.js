@@ -42,12 +42,18 @@ const userSchema = new mongoose.Schema({
     },
 
     active: {
-        type: Boolean
+        type: Boolean,
+        default: true
     },
 
     approved: {
         type: Boolean,
         default: true
+    },
+    
+    emailVerified: {
+        type: Boolean,
+        default: false
     },
 
     products: [{
