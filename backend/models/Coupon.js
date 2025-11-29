@@ -43,11 +43,16 @@ const couponSchema = new mongoose.Schema({
 
     expiry: {
         type: Date,
-        required: true
+        required: true,
+        validate: {
+            validator: (v) => v > Date.now(),
+            message: "Expiry date must be in future!"
+        }
     },
 
     active: {
         type: Boolean,
+        default: true,
         required: true
     },
 
