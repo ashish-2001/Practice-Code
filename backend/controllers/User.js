@@ -42,7 +42,7 @@ async function signup(req, res){
         if(!parsedResult.success){
             return res.status(404).json({
                 success: false,
-                message: parsedResult.error.errors[0]?.message || "All fields are required!";
+                message: parsedResult.error.errors[0]?.message || "All fields are required!"
             });
         };
 
@@ -288,7 +288,7 @@ async function signin(req, res){
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
-            error
+            error: error.message
         });
     };
 };

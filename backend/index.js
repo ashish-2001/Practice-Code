@@ -25,7 +25,7 @@ const allowedOrigins = [
 
     "http://admin-prarabdh.in",
     "http://seller-prarabdh.in",
-    "http://prarabdh.com"
+    "http://prarabdh.in"
 ]
 
 app.use(cors({
