@@ -37,7 +37,7 @@ async function createCategory(req, res){
         };
 
         
-        const createdBy = req.user?.userId;
+        const createdBy = req.user._id;
 
         if(!createdBy){
             return res.status(401).json({
@@ -50,7 +50,7 @@ async function createCategory(req, res){
 
         if(req.files?.thumbnailImage){
             try{
-                const uploaded = uploadImageToCloudinary(
+                const uploaded = await uploadImageToCloudinary(
                     req.files.thumbnailImage,
                     "categories",
                     1000,
@@ -127,7 +127,7 @@ async function categoryPageDetails(req, res){
         const selectedCategory = await Category.findById(categoryId);
 
         if(!selectedCategory){
-            return res.status(401).json({
+            return res.status(404).json({
                 success: false,
                 message: "Category not found!"
             });
