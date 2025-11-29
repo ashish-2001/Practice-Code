@@ -38,7 +38,7 @@ async function sendVerificationEmail(email, otp){
 
         console.log("Mail response:", mailResponse);
     } catch(error){
-        throw new Error("Failed to send verification email!", error.message);
+        throw new Error("Failed to send verification email: " + error.message);
     }
 }
 
