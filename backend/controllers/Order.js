@@ -2,82 +2,140 @@ import { Address } from "../models/Address";
 import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
 import { Order } from "../models/Order";
-import PDFDocument from "pdfkit";
+import PDFDocument, { path } from "pdfkit";
 import fs from "fs";
+import mongoose from "mongoose";
+import { success } from "zod";
+
+
+const getUserId = (req) => req.user?.userId || req.user?._id;
 
 async function createOrder(req, res){
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try{
 
-        const userId = req.user._id;
+        const userId = getUserId(req);
+
+        if(!userId){
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        };
 
         const { items, paymentMethod, addressId } = req.body;
 
-        if(!items || !items.length || addressId ){
+        if(!Array.isArray(items || items.length || !addressId)){
             return res.status(403).json({
                 success: false,
                 message: "Items and addressId is required!"
             });
         }
 
-        const address = await Address.findById(addressId);
+        const address = await Address.findById(addressId).session(session);
 
         if(!address || String(address.user) !== String(userId)){
-            return req.status(400).json({
+            await session.abortTransaction();
+            return res.status(400).json({
                 success: false,
                 message: "Invalid address!"
             });
         };
 
         let totalAmount = 0;
-        let updatedProducts = [];
+        const orderItems = [];
+        let inventoryLogs = [];
 
         for( const item of items){
-            const product = await Product.findById(item.product)
-            if(!product){
+            if(!item.product || !Number.isInteger(item.quantity) || item.quantity <= 0){
+                await session.abortTransaction();
                 return res.status(403).json({
                     success: false,
                     message: `Product not found:- ${item.product}`
                 })
             }
 
-            if(product.productStock < item.quantity){
+            const product = await Product.findById(item.product).session(session);
+
+            if(!product){
                 return res.status(403).json({
                     success: false,
-                    message: "Product quantity cannot be negative!"
+                    message: `Product not found: ${item.product}`
                 });
+            }
+
+            if(product.productStock < item.quantity){
+                await session.abortTransaction();
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for the product ${product.productName}`
+                })
             }
 
             product.productStock -= item.quantity;
 
-            if(!product.customerPurchased.includes(userId)){
+            if(!product.customerPurchased.map(String).includes(String(userId))){
                 product.customerPurchased.push(userId);
             }
 
-            await product.save();
-            updatedProducts.push(product);
+            await product.save({ session });
 
-            totalAmount += item.quantity * product.productPrice;
-            
-            await Inventory.create({
+            const price = product.productPrice;
+
+            orderItems.push({
+                product: product._id,
+                quantity: item.quantity,
+                price
+            });
+
+            totalAmount += price * item.quantity;
+
+            inventoryLogs.push({
                 createdBy: userId,
-                items,
+                product: product._id,
+                change: item.quantity,
+                reason: "Purchase"
+            });
+
+            const addressString = `${address.fullName}, ${address.addressLine1}${address.addressLine2 ? "," + address.addressLine1 : ""}, ${address.city}, ${address.state}, ${address.country} - ${address.pinCode}`;
+
+            const createOrder = await Order.create([{
+                customer: userId,
+                items: orderItems,
                 totalAmount,
-                paymentMethod,
-                address: `${address.fullName}, ${address.street}, ${address.city}, ${address.state}, ${address.country}- ${address.pinCode}`
-            })
+                paymentMethod: paymentMethod || "Cash on delivery",
+                address: addressString,
+                paymentStatus: "Pending",
+                orderStatus: "Processing"
+            }], { session });
+        };
+
+        if(inventoryLogs.length){
+            await Inventory.insertMany(inventoryLogs, { session });
         }
 
-        return res.status(200).json({
-            success: false,
-            message: "Order created successfully!"
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.status(201).json({
+            success: true,
+            message: "Order created successfully!",
+            order: createOrder[0]
         });
     } catch(error){
+        try{
+            await session.abortTransaction();
+            session.endSession();
+        } catch(_){}
+        console.error("Create order error:", error);
         return res.status(500).json({
             success: false,
-            message: "Interval server error!",
+            message: "Internal server error!",
             error: error.message
-        });
+        })
     }
 }
 
@@ -91,20 +149,17 @@ async function getAllOrders(req, res){
             });
         };
 
-        const orders = Order.find()
+        const orders = await Order.find()
         .populate("customer", "firstName lastName email")
         .populate({
-            path: "items-product",
-            select: "productName productPrice productStock createdBy",
-            populate: {
-                path: "createdBy",
-                select: "firstName lastName email"
-            }
+            path: "items.product",
+            select: "productName productPrice productStock createdBy"
         }).sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
             message: "Data fetched successfully",
+            count: orders.length,
             orders
         });
     }catch(error){
@@ -127,29 +182,34 @@ async function getSellerOrders(req, res){
             });
         };
 
-        const sellerProducts = await Product.find({
-            createdBy: req.user._id
-        }).select( "_id productName productPrice" );
+        const sellerId = getUserId(req);
 
-        if(sellerProducts.length === 0){
+        const sellerProducts = await Product.find({
+            createdBy: sellerId
+        }).select( "_id").lean();
+
+        const sellerProductIds = sellerProducts.map(p => p._id.toString());
+
+        if(sellerProductIds.length === 0){
             return res.status(200).json({
                 success: true,
                 message: "No products found for this seller!",
+                count: 0,
                 orders: []
             })
         }
 
-        const sellerProductIds = sellerProducts.map(p => p._id);
-
-        let orders = await Order.find()
+        const orders = await Order.find()
         .populate("customer", "firstName lastName email")
-        .populate({
-            path: "items-product",
-            select: "productName productPrice productStock createdBy"
-        }).sort({ createdBy: -1 });
+        .populate("items.product","productName productPrice productStock createdBy"
+        ).sort({ createdBy: -1 });
 
-        let filteredOrders = orders.map(order => {
-            const sellerItems = order.items.filter(item => sellerProductIds.includes(item.product._id));
+        const filtered = orders.map(order => {
+            const sellerItems = order.items.filter(item => sellerProductIds.includes(String(item.product._id)));
+
+            if(sellerItems.length === 0){
+                return null;
+            }
 
             if(sellerItems.length > 0){
                 return {
@@ -157,19 +217,18 @@ async function getSellerOrders(req, res){
                     customer: order.customer,
                     orderStatus: order.orderStatus,
                     paymentStatus: order.paymentStatus,
+                    totalAmount: order.totalAmount,
                     createdAt: order.createdAt,
                     items: sellerItems
                 }
             }
-
-            return null;
         }).filter(Boolean);
 
         return res.status(200).json({
             success: true,
-            message: "All the orders of the seller's product has been fetched successfully!",
-            count: filteredOrders.length,
-            orders: filteredOrders
+            message: "Seller's orders fetched successfully!",
+            count: filtered.length,
+            orders: filtered
         });
     } catch(error){
         return res.status(500).json({
@@ -180,68 +239,84 @@ async function getSellerOrders(req, res){
     }
 }
 
-async function cancelOrders(req, res){
+async function cancelOrder(req, res){
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
     try{
         const orderId = req.params.id;
-        const order = await Order.findById(orderId);
+        const userId = getUserId(req);
+
+        const order = await Order.findById(orderId).session(session);
 
         if(!order){
+            await session.abortTransaction();
+
             return res.status(403).json({
                 success: false,
                 message: "Order not found!"
             });
         }
 
-        if(req.user.role === "Customer"){
-            if(String(order.customer) !== String(req.user._id)){
-                return res.status(400).json({
-                    structuredClone: false,
-                    message: "You can cancel your own order!"
-                })
-            }
+        if(req.user.role === "Customer" && String(order.customer) !== String(userId)){
+            await session.abortTransaction();
+            return res.status(400).json({
+                structuredClone: false,
+                message: "You can cancel your own order only!"
+            });
         }
 
         if(req.user.role !== "Admin" && req.user.role !== "Customer"){
+            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
-                message: "Only Admin and customer can cancel their order!"
+                message: "Only Admin and customer can cancel their orders!"
             });
         };
 
         if(order.orderStatus === "Cancelled"){
+            await session.abortTransaction();
             return res.status(403).json({
                 success: false,
-                message: "Order already has been cancelled!"
+                message: "Order already cancelled!"
             });
         };
 
         for(const item of order.items){
-            const product = await Product.findById(item.product);
+            const product = await Product.findById(item.product).session(session);
 
-            if(product){
-                product.productStock += item.quantity;
-                await product.save();
+        if(!product) continue;
 
-                await Inventory.create({
-                    createdBy: req.user._id,
-                    product:product._id,
-                    change: item.quantity,
-                    reason: "Order cancelled!"
-                })
-            }
-        }
+        product.productStock += item.quantity;
+        await product.save({ session });
+
+        await Inventory.create([{
+            createdBy: userId,
+            product:product._id,
+            change: item.quantity,
+            reason: "Order cancelled!"
+        }], { session })
+    };
 
         order.orderStatus = "Cancelled"
 
-        await order.save();
+        await order.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         return res.status(200).json({
-            success: false,
+            success: true,
             message: "Order cancelled successfully!",
             order
         });
     } catch(error){
+        try{
+            await session.abortTransaction();
+            session.endSession();
+        } catch (_){}
+        console.error("Cancelled order error:", error)
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
@@ -257,17 +332,16 @@ async function getMyOrders(req, res){
                 success: false,
                 message: "Only customers can view their orders!"
             })
-        }
+        };
 
-        const orders = await Order.find({ customer: req.user._id })
-        .populate({
-            path: "items-product",
-            select: "productName productPrice productImage"
-        }).sort({ createdAt: -1 });
+        const userId = getUserId(req);
+
+        const orders = await Order.find({ customer: userId })
+        .populate("items.product", "productName productPrice productImage").sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: false,
-            message: "All the customer orders has been fetched!",
+            message: "Customer orders fetched!",
             count: orders.length,
             orders
         })
@@ -281,6 +355,10 @@ async function getMyOrders(req, res){
 }
 
 async function updateOrderStatus(req, res){
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try{
         if(req.user.role !== "Admin"){
             return res.status(403).json({
@@ -293,53 +371,50 @@ async function updateOrderStatus(req, res){
 
         const { status } = req.body;
 
-        const allowedCustomers = ["Processing", "Shipped", "Delivered", "Cancelled"];
+        const allowedStatuses = ["Processing", "Shipped", "Delivered", "Cancelled"];
 
-        if(!allowedCustomers.includes(status)){
+        if(!allowedStatuses.includes(status)){
+            await session.abortTransaction();
             return res.status(400).json({
                 success: false,
                 message: "Invalid order status!"
             })
         }
 
-        const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId).session(session);
 
         if(!order){
+            await session.abortTransaction();
             return res.status(404).json({
                 success: false,
                 message: "Order not found!"
             });
         };
 
-        if(order.orderStatus === "Delivered"){
-            return res.status(403).json({
-                success: false,
-                message: "Delivered order cannot be modified!"
-            });
-        };
-
-        if(status === "Cancelled"){
-            
+        if(status === "Cancelled" && order.orderStatus !== "Cancelled"){
             for (const item of order.items){
-                const product = await Product.findById(item.product);
+                const product = await Product.findById(item.product).session(session);
 
-                if(product){
+                if(!product){
                     product.productStock += item.quantity;
 
-                    await product.save();
+                    await product.save({ session });
 
-                    await Inventory.create({
-                        createdBy: req.user._id,
+                    await Inventory.create([{
+                        createdBy: req.user?.userId,
                         product: product._id,
                         change: item.quantity,
                         reason: "Order Cancelled!"
-                    });
+                    }], { session });
                 };
             }
         }
 
         order.orderStatus = status;
-        await order.save();
+        await order.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         return res.status(200).json({
             success: true,
@@ -347,6 +422,11 @@ async function updateOrderStatus(req, res){
             order
         })
     } catch(error){
+        try{
+            await session.abortTransaction();
+            session.endSession();
+        } catch(_){}
+        console.error("updated order status:", error)
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
@@ -361,9 +441,8 @@ async function generateInvoice(req, res){
         const orderId = req.params.id;
 
         const order = await Order.findById(orderId)
-        .populate("customer")
-        .populate("products.product")
-        .populate("address");
+        .populate("customer", "firstName lastName email")
+        .populate("items.product", "productName productPrice");
 
         if(!order){
             return res.status(404).json({
@@ -372,32 +451,67 @@ async function generateInvoice(req, res){
             });
         };
 
-        const doc = new PDFDocument()
-        const filePath = `invoices/invoice_${order._id}.pdf`;
+        const invoiceDir = path.resolve(process.cwd(), "invoices");
+        if(!fs.existsSync(invoiceDir)) fs.mkdirSync(invoiceDir, { recursive: true });
 
+        const fileName= `invoice_${order._id}.pdf`;
+        const filePath = path.join(invoiceDir, fileName);
+
+        const doc = new PDFDocument({ margin: 50 });
         const writeStream = fs.createWriteStream(filePath);
 
         doc.pipe(writeStream);
         doc.fontSize(20).text("Order Invoice", { align: "center" });
         doc.moveDown();
 
-        doc.fontSize(14).text("Order invoice", { align: "center" });
-        doc.text(`Customer: ${order.customer.fullName}`);
-        doc.text(`Address: ${order.address.street}, ${order.address.city}`);
+        const customerName = `${order.customer.firstName || ""} ${order.customer.lastName || ""}`.trim();
+        doc.fontSize(12).text(`Order ID: ${order._id}`);
+        doc.text(`Customer: ${customerName}`);
+        doc.text(`Email: ${order.customer.email || ""}`);
+        doc.text(`Order Date: ${order.createdAt.toLocaleString()}`);
+        doc.text(`Order Status: ${order.orderStatus}`);
         doc.moveDown();
 
-        order.products.forEach(item => {
-            doc.text(`${item.product.productName} * ${item.quantity} = ₹${item.price}`);
+        doc.text(`Shipping Address: ${order.address.street}, ${order.address.city}`);
+        doc.moveDown();
+
+        doc.text("Items:");
+        doc.moveDown(0.5);
+
+        order.items.forEach(item => {
+            const pname = item.product?.productName || "Product";
+            doc.text(`${pname} * ${item.quantity} = ${item.price * item.quantity}`);
         });
 
         doc.moveDown();
-        doc.fontSize(16).text(`Total amount: ₹${order.totalAmount}`);
+
+        doc.fontSize(14).text(`Total amount: ₹${order.totalAmount}`, { align: "right" });
 
         doc.end();
 
         writeStream.on("finish", () => {
-            res.download(filePath);
+            res.download(filePath, fileName, (error) => {
+                if(error){
+                    console.error("Invoice download error:", error);
+                    try{
+                        fs.unlinkSync(filePath);
+                    } catch(_) {}
+                } else{
+                    try{
+                        fs.unlinkSync(filePath);
+                    } catch(_){}
+                }
+            });
         });
+
+        writeStream.on("error", (error) => {
+            console.error("Invoice write error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Error generating invoice",
+                error: error.message
+            })
+        })
     } catch(error){
         return res.status(500).json({
             success: false,
@@ -410,7 +524,7 @@ async function generateInvoice(req, res){
 
 export {
     createOrder,
-    cancelOrders,
+    cancelOrder,
     getAllOrders,
     getSellerOrders,
     getMyOrders,
