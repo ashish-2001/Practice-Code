@@ -5,3 +5,11 @@ import { HiSearch } from "react-icons/hi";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { TiShoppingCart } from "react-icons/ti";
 import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
+
+function Navbar(){
+
+}
+
+export {
+    Navbar
+}
