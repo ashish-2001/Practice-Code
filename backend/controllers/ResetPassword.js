@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
 import bcrypt from "bcrypt";
@@ -35,7 +35,7 @@ async function resetPasswordToken(req, res){
 
         const token = crypto.randomBytes(20).toString("hex");
 
-        const updatedDetails = await User.findOneAndUpdate({
+        const updatedUser = await User.findOneAndUpdate({
             email: email
         }, {
             token: token,
@@ -55,7 +55,7 @@ async function resetPasswordToken(req, res){
         return res.status(200).json({
             success: true,
             message: "Password updated successfully!",
-            data: updatedDetails
+            data: updatedUser
         });
     } catch(error){
         return res.status(500).json({
@@ -91,7 +91,7 @@ async function resetPassword(req, res){
             token
         } = parsedResult.data;
 
-        if(confirmPassword !== password){
+        if(password !== confirmPassword){
             return res.status(402).json({
                 success: false,
                 message: "Password and confirm password does not match!"
@@ -105,18 +105,27 @@ async function resetPassword(req, res){
         if(!user){
             return res.status(404).json({
                 success: false,
-                message: "User not found!"
+                message: "Invalid or expired token!"
             });
         };
 
+        if(user.resetPasswordExpires && user.resetPasswordExpires < Date.now()){
+            return res.status(410).json({
+                success: false,
+                message: "Reset token has expired! Please request a new one."
+            })
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const updatedDetails = await User.findOneAndUpdate(
+        const updatedUser = await User.findOneAndUpdate(
             {
                 token: token
             },
             {
-                password: hashedPassword
+                password: hashedPassword,
+                token: null,
+                resetPasswordExpires: null
             },
             {
                 new: true
@@ -126,7 +135,7 @@ async function resetPassword(req, res){
         return res.status(200).json({
             success: true,
             message: "Password updated successfully!",
-            data: updatedDetails
+            data: updatedUser
         });
     } catch(error){
         return res.status(500).json({
