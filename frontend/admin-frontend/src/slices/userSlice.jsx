@@ -20,7 +20,7 @@ const userSlice = createSlice({
             state.orders = action.payload
         }
     }
-});
+})
 
 export const { setProfile, setAddresses, setUserOrders } = userSlice.actions;
 export default userSlice.reducer;
