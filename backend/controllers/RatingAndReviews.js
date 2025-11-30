@@ -137,13 +137,10 @@ async function getAverageRating(req, res){
 async function getAllRatingAndReviews(req, res){
 
     try{
-        const allReviews = (await RatingAndReviews.find()).toSorted({ rating: -1 }).populate({
-            path: "user",
-            select: "firstName lastName profileImage"
-        }).populate({
-            path: "product",
-            select: "productName"
-        });
+        const allReviews = await RatingAndReviews.find()
+            .sort({ rating: -1 })
+            .populate({ path: "user", select: "firstName lastName profileImage" })
+            .populate({ path: "product", select: "productName" });
 
         return res.status(200).json({
             success: false,
