@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { User } from "../models/User.js";
@@ -24,8 +24,29 @@ async function createProduct(req, res){
         };
 
         const  { categoryId } = req.body;
+        const files = req.files || {};
+        const productImageFiles = files?.productImage;
 
-        const productImage = req.files?.productImage;
+        if(!productImageFiles || (Array.isArray(productImageFiles) && productImageFiles.length === 0)){
+            return res.status(404).json({
+                success: false,
+                message: "Product image is required!"
+            });
+        }
+
+        const category = await Category.findById(categoryId);
+
+        if(!category){
+            return res.status(404).json({
+                success: false,
+                message: "Category not found!"
+            });
+        };
+
+        const fileObj = Array.isArray(productImageFiles) ? productImageFiles[0] : productImageFiles;
+        const uploaded = await uploadImageToCloudinary(fileObj, process.env.FOLDER_NAME || "products");
+        const productImageUrl = uploaded?.secure_url || "";
+        const createdBy = req.seller?.sellerId ?? null;
 
         const {
             productName,
@@ -34,26 +55,6 @@ async function createProduct(req, res){
             productStock,
         } = parsedResult.data;
 
-        if(!productImage){
-            return res.status(402).json({
-                success: false,
-                message: "Product image is required!"
-            });
-        };
-
-        const category = await Category.findById(categoryId);
-
-        if(!category){
-            return res.status(402).json({
-                success: false,
-                message: "Category not found!"
-            });
-        };
-
-        const productImagePath = productImage[0]?.path
-
-        const createdBy = req.seller?.sellerId;
-
         const productDetails = await Product.create({
             productName,
             productDescription,
@@ -61,9 +62,10 @@ async function createProduct(req, res){
             productStock,
             createdBy,
             category: categoryId,
-            productImage: productImagePath
+            productImage: productImageUrl
         });
 
+        if(!category.products) category.products = [];
         await category.products.push(productDetails._id);
         await category.save();
 
@@ -93,12 +95,13 @@ async function getAllProducts(req, res){
             productPrice: true,
             productImage: true,
             createdBy: true
-        }).populate("createdBy").exec();
+        }).populate("createdBy").populate("category").exec();
 
-        if(!allProducts){
+        if(!Array.isArray(allProducts) || allProducts.length === 0){
             return res.status(402).json({
                 success: false,
-                message: "No products found!"
+                message: "No products found!",
+                data: []
             });
         };
 
@@ -133,7 +136,7 @@ async function getSellerProducts(req, res){
 
         const allProducts = await Product.find({
             createdBy: sellerId
-        });
+        }).populate("category").exec();
 
         if(!allProducts){
             return res.status(402).json({
@@ -178,50 +181,76 @@ async function editProducts(req, res){
         const product = await Product.findById(productId);
 
         if(!product){
-            return res.status(402).json({
+            return res.status(404).json({
                 success: false,
                 message: "Product not found!"
             });
         };
 
-        if(category){
-            const categoryId = typeof category === "object" ? category._id: category ;
-            const categoryExists = await Category.findById(categoryId);
+        const sellerId = req.seller?.sellerId;
+        if(!sellerId){
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!"
+            });
+        };
 
-            if(!categoryExists){
+        if(product.createdBy && product.createdBy.toString() !== sellerId){
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: You are not the owner of this product!"
+            })
+        }
+
+        if(category){
+            const categoryId = (typeof category === "object") ? category._id: category ;
+            const newCategory = await Category.findById(categoryId);
+
+            if(!newCategory){
                 return res.status(402).json({
                     success: false,
                     message: "Category not found!"
                 });
             };
+            
+            if(product.category && product.category.toString() !== category.toString()){
+                await Category.findByIdAndUpdate(product.category, {
+                    $pull: {
+                        products: product._id
+                    }
+                })
+            }
+
+            if(!Array.isArray(newCategory.products) || !newCategory.products.includes(product._id)){
+                newCategory.products = newCategory.products || [];
+                newCategory.products.push(product._id);
+                await newCategory.save();
+            }
+
             product.category = categoryId;
         };
 
-        if(req.files && req.files?.productImage){
-            const thumbnail = req.files?.productImage;
-            const productImage = await uploadImageToCloudinary(
-                thumbnail,
-                process.env.FOLDER_NAME || "default",
-            )
-
-            product.productImage = productImage.secure_url;
+        if(req.files && req.files.productImage){
+            const thumbnail = Array.isArray(req.files.productImage) ? req.file.productImage[0] : req.files.productImage;
+            const uploadResult = await uploadImageToCloudinary( thumbnail, process.env.FOLDER_NAME || "products");
+            product.productImage = uploadResult.secure_url || product.productImage;
 
         };
 
-        if(productName){
+        if(productName !== undefined){
             product.productName = productName;
         }
 
-        if(productDescription){
+        if(productDescription !== undefined){
             product.productDescription = productDescription;
         };
 
-        if(productPrice){
-            product.productPrice = productPrice;
+        if(productPrice !== undefined){
+            product.productPrice = Number(productPrice);
         }
 
-        if(productStock){
-            product.productStock = productStock;
+        if(productStock !== undefined){
+            product.productStock = Number(productStock);
         }
 
         await product.save();
@@ -261,7 +290,22 @@ async function deleteProduct(req, res){
             });
         };
 
-        const customers = product.customerPurchased;
+        const sellerId = req.seller?.sellerId;
+        if(!sellerId){
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!"
+            });
+        }
+
+        if(product.createdBy && product.createdBy.toString() !== sellerId){
+            return res.status(403).json({
+                success: false,
+                message: "Forbidden: You are not the owner of this product!"
+            });
+        };
+
+        const customers = Array.isArray(product.customerPurchased) ? product.customerPurchased : [];
 
         for(const customerId of customers){
             await User.findByIdAndUpdate(customerId, {
@@ -299,28 +343,28 @@ async function searchProduct(req, res){
     try{
         const { searchQuery } = req.body;
 
-        if(!searchQuery || searchQuery.trim() === ""){
+        if(!searchQuery || String(searchQuery).trim() === ""){
             return res.status(402).json({
                 success: false,
                 message: "Search query is required!"
             });
         }
 
+        const regex = {
+            $regex: searchQuery,
+            $options: "i"
+        };
+
         const products = await Product.find({
             $or: [
                 {
-                    productName: {
-                        $regex: searchQuery,
-                        $options: "i"
-                    },
-
-                    productDescription: {
-                        $regex: searchQuery,
-                        $options: "i"
-                    }
+                    productName:regex
+                },
+                {
+                    productDescription: regex
                 }
             ]
-        });
+        }).populate("category").populate("createdBy").exec();
 
         return res.status(200).json({
             success: true,
