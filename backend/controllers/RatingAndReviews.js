@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Product } from "../models/Product.js"
 import { RatingAndReviews } from "../models/RatingAndReviews.js";
 import mongoose from "mongoose";
@@ -23,45 +23,64 @@ async function createRatingAndReview(req, res){
 
         const userId = req.user?.userId;
 
+        if(!userId){
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized!"
+            });
+        };
+
         const {
             rating,
             review,
             productId
         } = parsedResult.data;
 
-        const productDetails = await Product.findOne({
-            _id: productId,
-            customerPurchased: {
-                $elemMatch: {
-                    $eq: userId
-                }
-            }
-        });
-
-        if(!productDetails){
+        const product = await Product.findById(productId);
+        if(!product){
             return res.status(404).json({
                 success: false,
-                message: "No products purchased by you!"
+                message: "Product not found!"
             });
         };
 
-        const ratingAndReviews = await RatingAndReviews.create({
-            rating: rating,
-            review: review,
+        const purchased = product.customerPurchased?.some((id) => id.toString() === userId);
+        if(!purchased){
+            return res.status(403).json({
+                success: false,
+                message: "You can only review products you have purchased!"
+            });
+        }
+
+        const existingReview = await RatingAndReviews.findOne({
+            user: userId,
+            product: productId
+        });
+
+        if(existingReview){
+            return res.status(409).json({
+                success: false,
+                message: "You have already reviewed this product!"
+            });
+        };
+
+        const ratingData = await RatingAndReviews.create({
+            rating,
+            review,
             user: userId,
             product: productId
         });
 
         await Product.findByIdAndUpdate(productId, {
             $push: {
-                ratingAndReviews: ratingAndReviews._id
+                ratingAndReviews: ratingData._id
             }
         });
-
+    
         return res.status(200).json({
             success: true,
             message: "Rating and review created successfully!",
-            ratingAndReviews
+            data: ratingData
         });
     } catch(error){
         return res.status(500).json({
@@ -77,6 +96,13 @@ async function getAverageRating(req, res){
     try{
         
         const { productId } = req.body || req.query;
+
+        if(!productId){
+            return res.status(400).json({
+                success: false,
+                message: "Product id required!"
+            });
+        };
 
         const result = await RatingAndReviews.aggregate([
             {
@@ -94,17 +120,11 @@ async function getAverageRating(req, res){
             }
         ]);
 
-        if(result.length){
-            return res.status(200).json({
-                success: true,
-                avgRating: result[0].avgRating
-            });
-        } else{
-            return res.status(200).json({
-                success: true,
-                avgRating: 0
-            });
-        }
+        return res.status(200).json({
+            success: false,
+            message: "Average rating fetched successfully!",
+            avgRating: result.length ? result[0].avgRating : 0
+        });
     } catch(error){
         return res.status(500).json({
             success: false,
