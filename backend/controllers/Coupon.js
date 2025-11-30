@@ -86,7 +86,7 @@ async function createCoupon(req, res){
         if(already){
             return res.status(400).json({
                 success: false,
-                message: "Coupon has been already created for this product!"
+                message: "Coupon already exists for this product!"
             });
         };
 
@@ -169,8 +169,8 @@ async function editCoupon(req, res){
         }
 
         if(updates.product || updates.category){
-            const productId = updates.product;
-            const categoryId = updates.category;
+            const productId = updates.product || coupon.product;
+            const categoryId = updates.category || coupon.category;
 
             const productData = await Product.findById(productId);
             const categoryData = await Category.findById(categoryId);
@@ -185,7 +185,7 @@ async function editCoupon(req, res){
             if(String(productData.category) !== String(categoryId)){
                 return res.status(400).json({
                     success: false,
-                    message: "The product does not belong to the selected category!"
+                    message: "The product does not belong to this category!"
                 });
             };
 
@@ -197,6 +197,9 @@ async function editCoupon(req, res){
                     });
                 };
             };
+
+            updates.product = productId;
+            updates.category = categoryId;
         };
 
         Object.assign(coupon, updates);
@@ -242,7 +245,7 @@ async function deleteCoupon(req, res){
             if(String(coupon.createdBy) !== String(req.user._id)){
                 return res.status(400).json({
                     success: false,
-                    message: "You can not delete another's coupon!"
+                    message: "You can not delete someone else's coupon!"
                 });
             };
         };
@@ -267,8 +270,14 @@ async function getAllCoupons(req, res){
     try{
         let coupons;
 
-        if("Admin"){
-            return all
+        if(req.user.role === "Admin"){
+            coupons = await Coupon.find().populate("product").populate("category").populate("createdBy");
+        } else if(req.user.role === "Seller"){
+            coupons = await Coupon.find({ createdBy: req.user._id })
+            .populate("product")
+            .populate("category");
+        } else {
+            coupons = await Coupon.find({ active: true }).populate("product");
         }
 
         return res.status(200).json({
@@ -309,14 +318,14 @@ async function applyCoupon(req, res){
         if(!coupon.active){
             return res.status(400).json({
                 success: false,
-                message: "This coupon is no longer active!"
+                message: "Coupon is not active!"
             });
         };
 
         if(String(coupon.product) !== String(productId)){
             return res.status(400).json({
                 success: false,
-                message: "This coupon is not valid for this product!"
+                message: "Coupon is not valid for this product!"
             });
         };
 
@@ -332,7 +341,7 @@ async function applyCoupon(req, res){
         if(coupon.discountType === "Flat"){
             discount = coupon.discountValue;
         } else{
-            discount = (orderAmount * coupon.discountValue)/100;
+            discount = (orderAmount * coupon.discountValue) / 100;
         };
 
         if(coupon.maxDiscount && discount > coupon.maxDiscount){
