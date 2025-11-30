@@ -5,12 +5,16 @@ import { mailSender } from "../utils/mailSender.js";
 import bcrypt from "bcrypt";
 import { Otp } from "../models/Otp.js";
 import otpGenerator from "otp-generator";
-
+import crypto from "crypto";
 import dotenv from "dotenv";
 import { Order } from "../models/Order.js";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
+
+if(JWT_SECRET){
+    console.warn("Warning: JWT_SECRET is not in environment variables.");
+};
 
 function detectRole(req){
     const origin = (req.headers.origin || "").toLowerCase();
