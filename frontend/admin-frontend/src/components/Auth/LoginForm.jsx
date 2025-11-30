@@ -61,3 +61,7 @@ function SigninForm(){
         </div>
     )
 }
+
+export {
+    SigninForm
+}
