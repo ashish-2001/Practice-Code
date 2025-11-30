@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Product } from "../models/Product.js"
 import { RatingAndReviews } from "../models/RatingAndReviews.js";
 import mongoose from "mongoose";
