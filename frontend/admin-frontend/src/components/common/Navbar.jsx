@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { HiSearch } from "react-icons/hi";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { TiShoppingCart } from "react-icons/ti";
