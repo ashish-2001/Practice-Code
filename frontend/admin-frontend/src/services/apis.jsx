@@ -24,7 +24,7 @@ const productEndpoints = {
     DELETE_PRODUCT_API: BASE_URL + "/product/deleteProduct",
     GET_FULL_PRODUCT_DETAILS_AUTHENTICATED: BASE_URL + "/product/getFullProductDetails",
     CREATE_RATING_API: BASE_URL + "/product/createRating",
-    ADD_PRODUCT_TO_CATEGORY: BASE_URL + "/product/addProductTOCategory",
+    ADD_PRODUCT_TO_CATEGORY_API: BASE_URL + "/product/addProductTOCategory",
     SEARCH_PRODUCT_API: BASE_URL + "/product/searchProduct",
     CREATE_CATEGORY_API: BASE_URL + "/product/createCategory"
 };
