@@ -33,7 +33,11 @@ const ratingAndEndpoints = {
     REVIEWS_DETAILS_API: BASE_URL + "/product/getReviews"
 };
 
-const contactUsEndpoints = {
+const contactEndpoint = {
+    CONTACT_ENDPOINT: BASE_URL + "/contact/contactUs"
+}
+
+const settingsEndpoints = {
     UPDATE_DISPLAY_PICTURE: BASE_URL + "/profile/updateDisplayPicture",
     CHANGE_PASS_API: BASE_URL + "auth/changePassword",
     DELETE_ACCOUNT_API: BASE_URL + "/auth/deleteAccount"
@@ -44,5 +48,6 @@ export {
     customerEndpoints,
     productEndpoints,
     ratingAndEndpoints,
-    contactUsEndpoints
+    contactEndpoint
+    settingsEndpoints
 }
