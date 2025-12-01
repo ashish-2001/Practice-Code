@@ -2,6 +2,8 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { apiConnector } from "../../services/apiConnector";
+import { contactEndpoint } from "../../services/apis";
 
 function ContactForm(){
 
@@ -40,6 +42,8 @@ function ContactForm(){
                     message: data.message,
                     contactNumber
                 }
+
+                const res = await apiConnector("POST", contactEndpoint.CONTACT_ENDPOINT, payload)
 
                 if(reset.data.success === true){
                     toast.success("Message sent successfully");
