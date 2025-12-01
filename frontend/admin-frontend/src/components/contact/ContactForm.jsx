@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 function ContactForm(){
 
@@ -32,24 +33,38 @@ function ContactForm(){
             try{
                 setLoading(true);
                 const contactNumber = data.countryCode+" "+data.contactNumber;
-                const countryCode = data.countryCode;
                 const payload = {
                     firstName: data.firstName,
                     lastName: data.lastName,
                     email: data.email,
                     message: data.message,
-                    contactNumber,
-                    countryCode
+                    contactNumber
                 }
 
-                const res = await 
+                if(reset.data.success === true){
+                    toast.success("Message sent successfully");
+                } else{
+                    toast.error("Failed to send message");
+                }
+            } catch(error){
+                console.log(error);
+                toast.error("Failed to send message");
+            } finally{
+                setLoading(false);
+                reset();
             }
         }
 
     return(
-        <div>
-
-        </div>
+        loading ? (<div className="">Loading</div>) : (
+            <div>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div>
+                        
+                    </div>
+                </form>
+            </div>
+        )
     )
 }
 
