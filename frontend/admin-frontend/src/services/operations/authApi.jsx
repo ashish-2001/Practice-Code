@@ -42,7 +42,41 @@ function sendOtp(email, navigate){
     } 
 }
 
+function signUp(firstName, lastName, email, password, confirmPassword, otp, navigate){
 
+    return async(dispatch) => {
+        const toastId = toast.loading("Loading...")
+        dispatch(setLoading(true));
+        const otpString = otp.toString().trim()
+
+        try{
+
+            const response = await apiConnector("POST", SIGN_UP_API, {
+                firstName,
+                lastName,
+                email,
+                password,
+                confirmPassword,
+                otp: otpString
+            });
+
+            console.log("Sign up api:", response);
+
+            if(!response.data.success){
+                throw new Error("response.data.message");
+            }
+            toast.success("Sign up successful");
+            navigate("/login");
+        } catch(error){
+            console.error("Sign up api error:", error);
+            toast.error("Sign up failed")
+            navigate("/signup");
+        }
+
+        dispatch(setLoading(false))
+        toast.dismiss(toastId);
+    }
+}
 
 export {
     sendOtp
