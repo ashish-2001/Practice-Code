@@ -43,7 +43,7 @@ function ContactForm(){
                     contactNumber
                 }
 
-                const res = await apiConnector("POST", contactEndpoint.CONTACT_ENDPOINT, payload)
+                const res = await apiConnector("POST", contactEndpoint.CONTACT_US_API, payload)
 
                 if(reset.data.success === true){
                     toast.success("Message sent successfully");
