@@ -34,7 +34,7 @@ const ratingAndEndpoints = {
 };
 
 const contactEndpoint = {
-    CONTACT_ENDPOINT: BASE_URL + "/contact/contactUs"
+    CONTACT_US_API: BASE_URL + "/contact/contactUs"
 }
 
 const settingsEndpoints = {
@@ -48,6 +48,6 @@ export {
     customerEndpoints,
     productEndpoints,
     ratingAndEndpoints,
-    contactEndpoint
+    contactEndpoint,
     settingsEndpoints
 }
