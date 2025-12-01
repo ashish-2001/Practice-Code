@@ -1,4 +1,4 @@
-import { setLoading, setToken } from "../../slices/authSlice";
+import { setLoading, setToken, setUser } from "../../slices/authSlice";
 import { apiConnector } from "../apiConnector";
 import { endpoints } from "../apis";
 import toast from "react-hot-toast";
@@ -102,10 +102,10 @@ function login(email, password, navigate){
             toast.success("Login successful");
             dispatch(setToken(response.data.token))
 
-            response.data?.user?.profileImage
+            const userImage = response.data?.user?.profileImage
             ? response.data.user.profileImage
             : `https://api.dicebar.com/5.x/initials/svg?seed=${response.data.user.firstName} ${response.data.user.lastName}`
-            
+                dispatch(setUser({...response.data.user, image: userImage}))
             localStorage.setItem("token", JSON.stringify(response.data.token))
 
             if(response.data.user.role === "Seller" && !response.data.user.approved){
@@ -128,5 +128,6 @@ function login(email, password, navigate){
 
 export {
     sendOtp,
-    signUp
+    signUp,
+    login
 }
