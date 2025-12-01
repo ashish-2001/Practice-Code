@@ -1,4 +1,4 @@
-import { setLoading } from "../../slices/authSlice";
+import { setLoading, setToken } from "../../slices/authSlice";
 import { apiConnector } from "../apiConnector";
 import { endpoints } from "../apis";
 import toast from "react-hot-toast";
@@ -42,12 +42,13 @@ function sendOtp(email, navigate){
     } 
 }
 
-function signUp(firstName, lastName, email, password, confirmPassword, otp, navigate){
+function signUp(firstName, lastName, email, password, confirmPassword, otp, navigate ){
+    async (dispatch) => {
 
-    return async(dispatch) => {
-        const toastId = toast.loading("Loading...")
-        dispatch(setLoading(true));
-        const otpString = otp.toString().trim()
+        const toastId = toast.loading("Loading...");
+        dispatch(setLoading(true))
+
+        const otpString = otp.toString().trim();
 
         try{
 
@@ -60,24 +61,72 @@ function signUp(firstName, lastName, email, password, confirmPassword, otp, navi
                 otp: otpString
             });
 
-            console.log("Sign up api:", response);
+            console.log("Sign up api response:", response);
 
             if(!response.data.success){
-                throw new Error("response.data.message");
+                throw new Error(response.data.message);
             }
-            toast.success("Sign up successful");
+
+            toast.success("Sign up  successful");
             navigate("/login");
         } catch(error){
-            console.error("Sign up api error:", error);
-            toast.error("Sign up failed")
+            toast.error("Sign up failed", error);
             navigate("/signup");
-        }
+        } 
 
+        dispatch(setLoading(false));
+        toast.dismiss(toastId);
+    }
+}
+
+function login(email, password, navigate){
+    
+    return async (dispatch) => {
+
+        const toastId = toast.loading("Loading...");
+        dispatch(setLoading(true));
+
+        try{
+
+            const response = apiConnector("POST", LOGIN_API, {
+                email,
+                password
+            });
+
+            console.log("Login api:", response.data.message);
+
+            if(!response.data.success){
+                throw new Error(response.data.message);
+            }
+
+            toast.success("Login successful");
+            dispatch(setToken(response.data.token))
+
+            response.data?.user?.profileImage
+            ? response.data.user.profileImage
+            : `https://api.dicebar.com/5.x/initials/svg?seed=${response.data.user.firstName} ${response.data.user.lastName}`
+            
+            localStorage.setItem("token", JSON.stringify(response.data.token))
+
+            if(response.data.user.role === "Seller" && !response.data.user.approved){
+                toast("Your account is pending for approval by admin");
+                navigate("/")
+            } else{
+                navigate("/dashboard");
+            }
+        } catch(error){
+            console.log("Login api", error);
+            toast("Login failed")
+        }
         dispatch(setLoading(false))
         toast.dismiss(toastId);
     }
 }
 
+
+
+
 export {
-    sendOtp
+    sendOtp,
+    signUp
 }
