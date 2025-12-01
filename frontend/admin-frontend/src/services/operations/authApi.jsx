@@ -80,54 +80,113 @@ function signUp(firstName, lastName, email, password, confirmPassword, otp, navi
 }
 
 function login(email, password, navigate){
-    
-    return async (dispatch) => {
+
+    return async(dispatch) => {
 
         const toastId = toast.loading("Loading...");
         dispatch(setLoading(true));
 
         try{
 
-            const response = apiConnector("POST", LOGIN_API, {
+            const response = await apiConnector("POST", LOGIN_API, {
                 email,
                 password
             });
 
-            console.log("Login api:", response.data.message);
+            console.log("Log in api response:", response)
 
             if(!response.data.success){
                 throw new Error(response.data.message);
             }
 
-            toast.success("Login successful");
-            dispatch(setToken(response.data.token))
+            dispatch(setToken(response.data.token));
 
-            const userImage = response.data?.user?.profileImage
+            const userImage = response.data.user.profileImage
             ? response.data.user.profileImage
-            : `https://api.dicebar.com/5.x/initials/svg?seed=${response.data.user.firstName} ${response.data.user.lastName}`
-                dispatch(setUser({...response.data.user, image: userImage}))
-            localStorage.setItem("token", JSON.stringify(response.data.token))
+            : `https://api.dicebear.com/5.x/initials/svg?seed=${response.data.user.firstName} ${response.data.user.lastName}`
+            dispatch(setUser({ ...response.data.user, profileImage: userImage }))
+            localStorage.setItem("token", JSON.stringify(response.data.token));
 
             if(response.data.user.role === "Seller" && !response.data.user.approved){
-                toast("Your account is pending for approval by admin");
+                toast("Your account is pending for approval")
                 navigate("/")
-            } else{
-                navigate("/dashboard");
+            }else{
+                navigate("/dashboard")
             }
-        } catch(error){
-            console.log("Login api", error);
-            toast("Login failed")
+        }catch(error){
+            console.log("Login api response error:", error)
+            toast.error("Log in failed")
         }
         dispatch(setLoading(false))
         toast.dismiss(toastId);
     }
 }
 
+function resetPassToken(email, setEmailSent){
 
+    return async(dispatch) => {
 
+        const toastId = toast.loading("Loading");
+        dispatch(setLoading(true));
+
+        try{
+            const response = await apiConnector("POST", RESET_PASS_TOKEN, {
+                email
+            });
+
+            console.log("Reset password token api:", response);
+
+            if(!response.data.success){
+                throw new Error(response.data.message);
+            }
+
+            toast.success("Password token reset successful");
+            setEmailSent(true);
+        } catch(error){
+            console.log("Reset password token api error:", error);
+            toast.error("Reset password token failed")
+        }
+
+        dispatch(setLoading(false));
+        toast.dismiss(toastId);
+    }
+}
+
+function resetPassword(password, confirmPassword, token, setResetComplete){
+
+    return async (dispatch) => {
+        
+        const toastId = toast.loading("Loading...")
+        dispatch(setLoading(true))
+
+        try{
+            const response = await apiConnector("POST", RESET_PASS_API, {
+                password,
+                confirmPassword,
+                token
+            })
+
+            console.log("Reset password response api", response);
+
+            if(!response.data.success){
+                throw new Error(response.data.message);
+            }
+
+            toast.success("Password reset successful")
+            setResetComplete(true);
+        } catch(error){
+            console.log("Reset password error", error)
+            toast.error("Password reset")
+        }
+        toast.dismiss(toastId);
+        dispatch(setLoading(false));
+    }
+}
 
 export {
     sendOtp,
     signUp,
-    login
+    login,
+    resetPassToken,
+    resetPassword
 }
