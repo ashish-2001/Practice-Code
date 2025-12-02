@@ -1,7 +1,6 @@
 const ROLE_TYPE = {
     CUSTOMER: "Customer",
-    ADMIN: "Admin",
-    SELLER: "Seller"
+    ADMIN: "Admin"
 };
 
 const PRODUCT_STATUS = {
