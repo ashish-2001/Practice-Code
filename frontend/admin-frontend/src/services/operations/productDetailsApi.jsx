@@ -149,6 +149,182 @@ async function editProductDetails(data, token){
 
     return result;
 }
+
+async function fetchSellerProducts(token){
+
+    let result = [];
+    const toastId = toast.loading("Loading...");
+
+    try{
+        const response = await apiConnector("GET", GET_ALL_SELLER_PRODUCT, null, {
+            Authorization: `Bearer ${token}`
+        });
+
+        if(!response.data.success){
+            throw new Error(response.data.message);
+        }
+
+        result = response.data.data;
+    } catch(error){
+        console.log("Get all seller products error:", error)
+        toast.error("Failed to get the seller products")
+    } finally{
+        toast.dismiss(toastId);
+    }
+    return result;
+}
+
+async function deleteProducts(data, token){
+
+    const toastId = toast.loading("Loading...");
+
+    try{
+
+        const response = await apiConnector("DELETE", DELETE_PRODUCT_API, data, {
+            Authorization: `Bearer ${token}`
+        })
+
+        if(!response.data.success){
+            throw new Error(response.data.message);
+        }
+
+        toast.success("Product deleted successfully");
+    } catch(error){
+        console.log("Delete api error", error);
+        toast.error("Product could not be deleted")
+    } finally{
+        toast.dismiss(toastId);
+    }
+}
+
+async function getFullDetailsOfTheProduct(productId, token){
+    const toastId = toast.loading("Loading...")
+    let result = null;
+
+    try{
+        const response = await apiConnector("GET", `${GET_FULL_PRODUCT_DETAILS_AUTHENTICATED}?productId=${productId}`, null, {
+            Authorization: `Bearer ${token}`
+        })
+
+        if(!response.data.success){
+            throw new Error(response.data.message);
+        }
+
+        result = response.data.data;
+    } catch(error){
+        console.log("Get full details of the product api error", error)
+        toast.error("Could not get full details of the product")
+    } finally{
+        toast.dismiss(toastId);
+    }
+    return result;
+}
+
+async function createCategory(data, token){
+    const toastId = toast.loading("Loading...");
+
+    try{
+        const response = await apiConnector("POST", CREATE_CATEGORY_API, data, {
+            Authorization: `Bearer ${token}`
+        })
+
+        if(!response.data.success){
+            throw new Error(response.data.message);
+        }
+
+        toast.success("Category created successfully");
+    } catch(error){
+        console.log("Create category api error", error)
+        toast.error("Failed to create category");
+    } finally{
+        toast.dismiss(toastId);
+    }
+}
+
+async function addProductToCategory(data, token){
+
+    const toastId = toast.loading("Loading...");
+    let success = false;
+
+    try{
+        const response = await apiConnector("POST", ADD_PRODUCT_TO_CATEGORY_API, data, {
+            Authorization: `Bearer ${token}`
+        })
+
+        if(!response.data.success){
+            throw new Error(response.data.message);
+        }
+
+        toast.success("Product added to the category")
+        success = true
+    } catch(error){
+        console.log("Add product to the category api error", error);
+        toast.error("Failed to add product to the category");
+    } finally{
+        toast.dismiss(toastId);
+    }
+
+    return success;
+}
+
+async function searchProduct(searchQuery, dispatch){
+    
+    dispatch(setProgress(50));
+    let result = null;
+
+    try{
+        const response = await apiConnector("POST", SEARCH_PRODUCT_API, {
+            searchQuery
+        });
+
+        if(!response.data.success){
+            throw new Error(response.data.message);
+        }
+
+        result = response.data.data;
+    } catch(error){
+        console.log("Search product api error", error);
+        toast.error("Failed to search product")
+    }
+
+    return result;
+}
+
+async function createRating(data, token){
+
+    const toastId = toast.loading("Loading");
+    let success = false;
+    try{
+        const response = await apiConnector("POST", CREATE_RATING_API, data, {
+            Authorization: `Bearer ${token}`
+        });
+
+        if(!response.data.success){
+            throw new Error(response.data.message);
+        }
+
+        toast.success("Rating created successfully");
+        success = true
+    } catch(error){
+        console.log("Create rating api error", error);
+        toast.error("Failed to create rating")
+    } finally{
+        toast.dismiss(toastId)
+    }
+    return success;
+}
+
 export {
-    getAllProducts
+    getAllProducts,
+    fetchProductCategories,
+    fetchProductDetails,
+    addProductDetails,
+    editProductDetails,
+    fetchSellerProducts,
+    deleteProducts,
+    getFullDetailsOfTheProduct,
+    createCategory,
+    addProductToCategory,
+    searchProduct,
+    createRating
 }
