@@ -62,9 +62,9 @@ const couponSchema = new mongoose.Schema({
         required: true
     },
 
-    createdByRole: {
+    role: {
         type: String,
-        enum: ["Admin", "Seller"],
+        enum: ["Admin", "Customer"],
         required: true
     }
 }, { timestamps: true });
