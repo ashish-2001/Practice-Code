@@ -171,7 +171,7 @@ async function getAllOrders(req, res){
     };
 }
 
-async function getSellerOrders(req, res){
+async function getAdminOrders(req, res){
 
     try{
         
@@ -526,7 +526,7 @@ export {
     createOrder,
     cancelOrder,
     getAllOrders,
-    getSellerOrders,
+    getAdminOrders,
     getMyOrders,
     updateOrderStatus,
     generateInvoice
