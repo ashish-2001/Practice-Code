@@ -22,7 +22,6 @@ function detectRole(req){
     const target = host || origin;
 
     if(target.includes("admin-prarabdh.in") || target.includes("admin")) return "Admin";
-    if(target.includes("seller-prarabdh.in") || target.includes("seller")) return "Seller";
     return "Customer";
 }
 
@@ -437,7 +436,6 @@ async function adminDashboard(req, res){
         });
 
         const totalCustomers = await User.countDocuments({ role: "Customer" });
-        const totalSellers = await User.countDocuments({ role: "Seller" });
 
         return res.status(200).json({
             success: true,
@@ -445,7 +443,6 @@ async function adminDashboard(req, res){
             totalOrders,
             totalCustomers,
             totalRevenue,
-            totalSellers,
             pendingDeliveries
         });
     } catch(error){
