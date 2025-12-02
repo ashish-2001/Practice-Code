@@ -53,27 +53,6 @@ async function isAdmin(req, res, next){
 
 }
 
-async function isSeller(req, res, next){
-
-    try{
-        if(req.user.role !== "Seller"){
-            return res.status(403).json({
-                success: false,
-                message: "This is a protected route for Seller only!"
-            });
-        };
-
-        next();
-
-    } catch(error){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error!",
-            error
-        });
-    };
-}
-
 async function isCustomer(req, res, next){
     
     try{
@@ -98,6 +77,5 @@ async function isCustomer(req, res, next){
 export {
     auth,
     isAdmin,
-    isCustomer,
-    isSeller
+    isCustomer
 }
