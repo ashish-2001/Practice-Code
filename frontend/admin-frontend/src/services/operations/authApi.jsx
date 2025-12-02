@@ -107,7 +107,7 @@ function login(email, password, navigate){
             dispatch(setUser({ ...response.data.user, profileImage: userImage }))
             localStorage.setItem("token", JSON.stringify(response.data.token));
 
-            if(response.data.user.role === "Seller" && !response.data.user.approved){
+            if(response.data.user.role === "Admin" && !response.data.user.approved){
                 toast("Your account is pending for approval")
                 navigate("/")
             }else{
