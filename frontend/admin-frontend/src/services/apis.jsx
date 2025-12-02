@@ -20,7 +20,7 @@ const productEndpoints = {
     EDIT_PRODUCT_API: BASE_URL + "/product/editCourse",
     PRODUCT_CATEGORIES_API: BASE_URL + "/product/showAllCategories",
     CREATE_PRODUCT_API: BASE_URL + "/product/createProduct",
-    GET_ALL_SELLER_PRODUCTS: BASE_URL + "/product/getAllSellerProducts",
+    GET_ALL_ADMIN_PRODUCTS: BASE_URL + "/product/getAllAdminProducts",
     DELETE_PRODUCT_API: BASE_URL + "/product/deleteProduct",
     GET_FULL_PRODUCT_DETAILS_AUTHENTICATED: BASE_URL + "/product/getFullProductDetails",
     CREATE_RATING_API: BASE_URL + "/product/createRating",
