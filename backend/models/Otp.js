@@ -13,7 +13,7 @@ const otpSchema = new mongoose.Schema({
 
     role: {
         type: String,
-        enum: ["Admin", "Seller", "Customer"]
+        enum: ["Admin", "Customer"]
     }, 
 
     expiresAt: {
