@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { User } from "../models/User.js";
@@ -46,7 +46,7 @@ async function createProduct(req, res){
         const fileObj = Array.isArray(productImageFiles) ? productImageFiles[0] : productImageFiles;
         const uploaded = await uploadImageToCloudinary(fileObj, process.env.FOLDER_NAME || "products");
         const productImageUrl = uploaded?.secure_url || "";
-        const createdBy = req.seller?.sellerId ?? null;
+        const createdBy = req.admin?.adminId ?? null;
 
         const {
             productName,
@@ -119,23 +119,23 @@ async function getAllProducts(req, res){
     };
 };
 
-async function getSellerProducts(req, res){
+async function getAdminProducts(req, res){
 
     try{
 
-        const sellerId = req.seller?.sellerId;
+        const adminId = req.admin?.adminId;
 
-        const seller = await User.findById(sellerId);
+        const admin = await User.findById(adminId);
 
-        if(!seller){
+        if(!admin){
             return res.status(402).json({
                 success: false,
-                message: "Seller not found!"
+                message: "admin not found!"
             });
         };
 
         const allProducts = await Product.find({
-            createdBy: sellerId
+            createdBy: adminId
         }).populate("category").exec();
 
         if(!allProducts){
@@ -187,15 +187,15 @@ async function editProducts(req, res){
             });
         };
 
-        const sellerId = req.seller?.sellerId;
-        if(!sellerId){
+        const adminId = req.admin?.adminId;
+        if(!adminId){
             return res.status(401).json({
                 success: false,
                 message: "Unauthorized!"
             });
         };
 
-        if(product.createdBy && product.createdBy.toString() !== sellerId){
+        if(product.createdBy && product.createdBy.toString() !== adminId){
             return res.status(403).json({
                 success: false,
                 message: "Forbidden: You are not the owner of this product!"
@@ -290,15 +290,15 @@ async function deleteProduct(req, res){
             });
         };
 
-        const sellerId = req.seller?.sellerId;
-        if(!sellerId){
+        const adminId = req.admin?.adminId;
+        if(!adminId){
             return res.status(401).json({
                 success: false,
                 message: "Unauthorized!"
             });
         }
 
-        if(product.createdBy && product.createdBy.toString() !== sellerId){
+        if(product.createdBy && product.createdBy.toString() !== adminId){
             return res.status(403).json({
                 success: false,
                 message: "Forbidden: You are not the owner of this product!"
@@ -384,7 +384,7 @@ async function searchProduct(req, res){
 export {
     createProduct,
     getAllProducts,
-    getSellerProducts,
+    getAdminProducts,
     editProducts,
     deleteProduct,
     searchProduct
