@@ -174,26 +174,19 @@ async function getAllOrders(req, res){
 async function getAdminOrders(req, res){
 
     try{
-        
-        if(req.user.role !== "Seller"){
-            return res.status(403).json({
-                success: false,
-                message: "Only seller can access his products being ordered!"
-            });
-        };
 
-        const sellerId = getUserId(req);
+        const adminId = getUserId(req);
 
-        const sellerProducts = await Product.find({
-            createdBy: sellerId
+        const adminProducts = await Product.find({
+            createdBy: adminId
         }).select( "_id").lean();
 
-        const sellerProductIds = sellerProducts.map(p => p._id.toString());
+        const adminProductIds = adminProducts.map(p => p._id.toString());
 
-        if(sellerProductIds.length === 0){
+        if(adminProductIds.length === 0){
             return res.status(200).json({
                 success: true,
-                message: "No products found for this seller!",
+                message: "No products found for this admin!",
                 count: 0,
                 orders: []
             })
@@ -205,13 +198,13 @@ async function getAdminOrders(req, res){
         ).sort({ createdBy: -1 });
 
         const filtered = orders.map(order => {
-            const sellerItems = order.items.filter(item => sellerProductIds.includes(String(item.product._id)));
+            const adminItems = order.items.filter(item => adminProductIds.includes(String(item.product._id)));
 
-            if(sellerItems.length === 0){
+            if(adminItems.length === 0){
                 return null;
             }
 
-            if(sellerItems.length > 0){
+            if(adminItems.length > 0){
                 return {
                     _id: order._id,
                     customer: order.customer,
@@ -219,14 +212,14 @@ async function getAdminOrders(req, res){
                     paymentStatus: order.paymentStatus,
                     totalAmount: order.totalAmount,
                     createdAt: order.createdAt,
-                    items: sellerItems
+                    items: adminItems
                 }
             }
         }).filter(Boolean);
 
         return res.status(200).json({
             success: true,
-            message: "Seller's orders fetched successfully!",
+            message: "admin's orders fetched successfully!",
             count: filtered.length,
             orders: filtered
         });
