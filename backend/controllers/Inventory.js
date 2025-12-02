@@ -33,15 +33,6 @@ async function createInventory(req, res){
             change
         } = parsedResult.data;
 
-        const seller = await User.findById(createdBy).session(session);
-
-        if(!seller){
-            return res.status(404).json({
-                success: false,
-                message: "Seller not found!"
-            });
-        };
-
         const productData = await Product.findById(productId).session(session);
 
         if(!productData){
@@ -126,35 +117,6 @@ async function getAllInventory(req, res){
             });
         }
 
-        else if(req.user.role === "Seller"){
-            const sellerProducts = await Product.find({
-                createdBy: req.user._id
-            }).select("_id");
-
-            const sellerProductIds = sellerProducts.map((p) => p._id);
-
-            inventoryLogs = await Inventory.find({
-                product:{
-                    $in: sellerProductIds
-                }
-            })
-            .populate("createdBy", "firstName lastName email role")
-            .populate({
-                path: "product", 
-                select: "productName productStock category productPrice createdBy",
-                populate: [
-                    {
-                        path: "category",
-                        select: "categoryName"
-                    },
-                    {
-                        path: "createdBy",
-                        select: "firstName lastName email role" 
-                    }
-                ]
-            });
-        }
-
         else{
             return res.status(403).json({
                 success: false,
@@ -177,16 +139,16 @@ async function getAllInventory(req, res){
     }
 }
 
-async function getSellerInventory(req, res){
+async function getProductInventory(req, res){
 
     try{
-        const sellerId = req.params._id;
+        const adminId = req.params._id;
 
-        const inventoryLogs = await Inventory.find({ createdBy: sellerId }).populate("product").sort({ editedAt: -1 });
+        const inventoryLogs = await Inventory.find({ createdBy: adminId }).populate("product").sort({ editedAt: -1 });
 
         return res.status(200).json({
             success: true,
-            message: "Seller data fetched successfully!",
+            message: "Admin data fetched successfully!",
             inventoryLogs
         });
     } catch(error){
@@ -239,7 +201,7 @@ async function editInventory(req, res){
         if(req.user.role !== "Admin" && req.user._id.toString() !== oldInventory.createdBy.toString()){
             return res.status(403).json({
                 success: false,
-                message: "You can not edit another seller's inventory!"
+                message: "You can not edit another admin's inventory!"
             });
         }
 
@@ -305,6 +267,6 @@ async function editInventory(req, res){
 export {
     createInventory,
     getAllInventory,
-    getSellerInventory,
+    getProductInventory,
     editInventory
 }
