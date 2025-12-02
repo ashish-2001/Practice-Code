@@ -9,7 +9,7 @@ const {
     CREATE_CATEGORY_API,
     EDIT_PRODUCT_API,
     CREATE_PRODUCT_API,
-    GET_ALL_SELLER_PRODUCT,
+    GET_ALL_ADMIN_PRODUCT,
     GET_ALL_PRODUCT_API,
     DELETE_PRODUCT_API,
     GET_FULL_PRODUCT_DETAILS_AUTHENTICATED,
@@ -150,13 +150,13 @@ async function editProductDetails(data, token){
     return result;
 }
 
-async function fetchSellerProducts(token){
+async function fetchAdminProducts(token){
 
     let result = [];
     const toastId = toast.loading("Loading...");
 
     try{
-        const response = await apiConnector("GET", GET_ALL_SELLER_PRODUCT, null, {
+        const response = await apiConnector("GET", GET_ALL_ADMIN_PRODUCT, null, {
             Authorization: `Bearer ${token}`
         });
 
@@ -166,8 +166,8 @@ async function fetchSellerProducts(token){
 
         result = response.data.data;
     } catch(error){
-        console.log("Get all seller products error:", error)
-        toast.error("Failed to get the seller products")
+        console.log("Get all admin products error:", error)
+        toast.error("Failed to get the admin products")
     } finally{
         toast.dismiss(toastId);
     }
@@ -320,7 +320,7 @@ export {
     fetchProductDetails,
     addProductDetails,
     editProductDetails,
-    fetchSellerProducts,
+    fetchAdminProducts,
     deleteProducts,
     getFullDetailsOfTheProduct,
     createCategory,
