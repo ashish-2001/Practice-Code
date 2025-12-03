@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Schema } from "zod/v3";
 
 const inventorySchema = new mongoose.Schema({
+
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
@@ -35,6 +36,7 @@ const inventorySchema = new mongoose.Schema({
             }
         }
     ]
+    
 }, { timestamps: true });
 
 const Inventory = mongoose.model("Inventory", inventorySchema);
