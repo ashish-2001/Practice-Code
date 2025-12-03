@@ -3,6 +3,7 @@ import { otpTemplate } from "../mail/templates/emailVerificationTemplate.js";
 import { mailSender } from "../utils/mailSender.js";
 
 const otpSchema = new mongoose.Schema({
+    
     otp: {
         type: String 
     },
