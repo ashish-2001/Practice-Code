@@ -1,29 +1,22 @@
 import mongoose from "mongoose";
 
 const couponSchema = new mongoose.Schema({
-
-    product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-        required: true
-    },
-
-    category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category",
-        required: true
-    },
-
+    
     code: {
         type: String,
         required: true,
         uppercase: true,
+        trim: true,
         unique: true
+    },
+
+    description: {
+        type: String
     },
 
     discountType: {
         type: String,
-        enum: ["Flat", "Percentage"],
+        enum: ["Fixed", "Percent"],
         required: true
     },
 
@@ -32,42 +25,53 @@ const couponSchema = new mongoose.Schema({
         required: true
     }, 
 
-    minOrderAmount: {
+    minPurchase: {
         type: Number,
         default: 0
     },
 
-    maxDiscount: {
-        type: Number
-    }, 
+    usageLimit: {
+        type: Number,
+        default: null
+    },
 
-    expiry: {
+    usedCount: {
+        type: Number,
+        default: 0
+    },
+
+    perUserLimit: {
+        type: Number,
+        default: 1
+    },
+
+    validFrom: {
         type: Date,
-        required: true,
-        validate: {
-            validator: (v) => v > Date.now(),
-            message: "Expiry date must be in future!"
-        }
+        default: Date.now
+    },
+
+    validUntil: {
+        type: Date,
+        default: null
     },
 
     active: {
         type: Boolean,
-        default: true,
-        required: true
+        default: true
     },
 
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-
-    role: {
+    appliesTo: {
         type: String,
-        enum: ["Admin", "Customer"],
-        required: true
+        enum: ['all', 'categories', 'products'],
+        default: 'all'
+    },
+
+    appliesIds: {
+        type: mongoose.Schema.Types.ObjectId
     }
 }, { timestamps: true });
+
+couponSchema.index({ code: 1 });
 
 const Coupon = mongoose.model("Coupon", couponSchema);
 
