@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { required } from "zod/mini";
 import { Schema } from "zod/v3";
 
 const productSchema = new mongoose.Schema({
