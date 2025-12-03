@@ -31,6 +31,17 @@ const festivalSchema = new mongoose.Schema({
         default: true
     },
 
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+
+    creatorRole: {
+        type: String,
+        enum: ['Admin', 'Customer'],
+        default: 'Admin'
+    },
+
     active: {
         type: Boolean,
         default: true
