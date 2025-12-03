@@ -1,35 +1,41 @@
 import mongoose from "mongoose";
+import { Schema } from "zod/v3";
 
 const inventorySchema = new mongoose.Schema({
-
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-
     product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
+        ref: 'Product',
         required: true
     },
 
-    change: {
-        type: Number,
-        required: true
-    },
-
-    reason: {
+    sku: {
         type: String,
-        enum: ["Purchase", "Order Cancelled", "Stock update"],
-        required: true
     },
 
-    editedAt: {
-        type: Date,
-        default: null
-    }
-});
+    attributes: Schema.Types.Mixed,
+
+    stock: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+
+    history: [
+        {
+            quantity: Number,
+            type: {
+                type: String,
+                enum: ['Increase', 'Decrease']
+            },
+
+            reason: String,
+            date: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ]
+}, { timestamps: true });
 
 const Inventory = mongoose.model("Inventory", inventorySchema);
 
