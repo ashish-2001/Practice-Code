@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Schema } from "zod/v3";
 
 const transactionSchema = new mongoose.Schema({
+
     order: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order',
@@ -31,10 +32,12 @@ const transactionSchema = new mongoose.Schema({
     },
 
     providerResponse: Schema.Types.Mixed,
+
     createdAt: {
         type: Date,
         default: Date.now
     }
+    
 }, { timestamps: true });
 
 const Transaction = mongoose.model("Transaction", transactionSchema);
