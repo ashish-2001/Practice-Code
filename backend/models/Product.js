@@ -1,57 +1,73 @@
 import mongoose from "mongoose";
+import { required } from "zod/mini";
+import { Schema } from "zod/v3";
 
 const productSchema = new mongoose.Schema({
 
-    productName: {
+    title: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        index: true
     },
 
-    productDescription: {
-        type: String,
-        required: true
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+        index: true
     },
 
-    productPrice: {
-        type: Number,
-        required: true
-    },
-
-    productStock: {
+    price: {
         type: Number,
         required: true
     },
     
-    category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category",
-        required: true
+    discountPrice: {
+        type: Number,
+        required: true,
+        default: null
     },
 
-    productImage: {
+    stock: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+
+    minOrderQuantity: {
+        type: Number,
+        default: 1
+    },
+
+    images: [{
+        type: String
+    }],
+
+    shortDescription: {
         type: String
     },
 
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
+    description: {
+        type: String
     },
 
-    customerPurchased: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    }],
-
-    ratingAndReviews: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "RatingAndReviews"
-    }],
+    attributes: Schema.Types.Mixed,
 
     status: {
         type: String,
-        enum: ["Draft", "Published"],
-        default: "Draft"
+        enum: ['active', 'draft'],
+        default: 'active'
+    },
+
+    isGiftable: {
+        type: Boolean,
+        default: false
+    },
+    
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
     }
 
 }, { timestamps: true });
