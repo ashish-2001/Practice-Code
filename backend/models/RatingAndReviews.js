@@ -1,34 +1,44 @@
 import mongoose from "mongoose";
 
 const ratingAndReviewSchema = new mongoose.Schema({
-    
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
 
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
     },
 
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    },
+    
     rating: {
         type:Number,
         required: true,
         min: 1,
         max: 5
     },
-    
-    review: {
-        type: String,
-        required: true
+
+    title: {
+        type: String
+    },
+
+    comment: {
+        type: String
+    },
+
+    approved: {
+        type: Boolean,
+        default: false
+    },
+
+    helpFullCount: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 
-ratingAndReviewSchema.index({
-    user: 1,
-    product: 1
-}, { unique: true });
+ratingAndReviewSchema.index({ product: 1, approved: 1 });
 
 const RatingAndReviews = mongoose.model("RatingAndReviews", ratingAndReviewSchema);
 
