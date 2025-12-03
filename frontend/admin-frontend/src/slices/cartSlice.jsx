@@ -11,7 +11,7 @@ const initialState = {
     : 0,
 
     totalAmount: localStorage.getItem("totalAmount")
-    ? JSON.parse(localStorage.getItem("totalItems"))
+    ? JSON.parse(localStorage.getItem("totalAmount"))
     : 0
 };
 
