@@ -16,17 +16,11 @@ const categorySchema = new mongoose.Schema({
         type: String
     },
 
-    createdBy: {
+    parent: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+        ref: 'Category'
+    }
 
-    products: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product"
-    }]
-    
 }, { timestamps: true });
 
 const Category = mongoose.model("Category", categorySchema);
