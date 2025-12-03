@@ -2,13 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
 
-    firstName: {
-        type: String,
-        required: true,
-        trim : true
-    },
-
-    lastName: {
+    name: {
         type: String,
         required: true,
         trim: true
@@ -21,7 +15,7 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
 
-    contactNumber: {
+    phone: {
         type: String,
         required: true
     },
@@ -32,7 +26,8 @@ const userSchema = new mongoose.Schema({
     },
 
     profileImage: {
-        type: String
+        type: String,
+        default: null
     },
 
     role: {
@@ -41,33 +36,25 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
-    active: {
-        type: Boolean,
-        default: true
-    },
+    addresses: [
+        {
+            label: {
+                type: String
+            },
 
-    approved: {
-        type: Boolean,
-        default: true
-    },
-    
-    emailVerified: {
-        type: Boolean,
-        default: false
-    },
-
-    products: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product"
-    }],
-
-    token: {
-        type: String
-    },
-
-    resetPasswordExpires: {
-        type: Date
-    },
+            fullName: String,
+            phone: String,
+            addressLine1: String,
+            addressLine2: String,
+            city: String,
+            state: String,
+            postalCode: String,
+            country: {
+                type: String,
+                default: 'India'
+            }
+        }
+    ],
 
     lastLogin: {
         type: Date,
