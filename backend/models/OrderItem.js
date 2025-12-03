@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Schema } from "zod";
+import { Schema } from "zod/v3";
 
 const orderItemSchema = new mongoose.Schema({
     product: {
