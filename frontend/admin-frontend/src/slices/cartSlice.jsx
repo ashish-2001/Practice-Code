@@ -50,7 +50,7 @@ const cartSlice = createSlice({
         removeFromCart: (state, action) => {
             const productId = action.payload;
             
-            state.cart.filter((item) => item._id !== productId);
+            state.cart = state.cart.filter((item) => item._id !== productId);
 
             toast.success("Product removed from the cart");
             updateProductTotal(state);
@@ -62,7 +62,7 @@ const cartSlice = createSlice({
 
             if(index >= 0){
                 state.cart[index].quantity += 1;
-                toast.success("Quantity increased for the product!");
+                toast.success("Quantity increased");
                 updateProductTotal(state);
             }
         },
@@ -74,9 +74,10 @@ const cartSlice = createSlice({
             if(index >= 0){
                 if(state.cart[index].quantity > 1){
                     state.cart[index].quantity -= 1;
-                    toast.success("Product removed from the quantity!");
+                    toast.success("Product decreased");
                 } else{
                     state.cart.splice(index, 1);
+                    toast.success("Product removed from the cart")
                 }
 
                 updateProductTotal(state);
@@ -92,7 +93,7 @@ const cartSlice = createSlice({
             localStorage.removeItem("totalItems");
             localStorage.removeItem("totalAmount");
             
-            toast.success("Cart cleared!");
+            toast.success("Cart cleared");
         }
     }
 });
