@@ -20,7 +20,7 @@ const orderSchema = new mongoose.Schema({
 
     billingAddress: Address,
 
-    subTotoal: {
+    subTotal: {
         type: Number,
         required: true
     },
