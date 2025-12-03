@@ -52,6 +52,11 @@ const productSchema = new mongoose.Schema({
         type: String
     },
 
+    tags: [{
+        type: String,
+        index: true
+    }],
+
     attributes: Schema.Types.Mixed,
 
     status: {
@@ -60,7 +65,7 @@ const productSchema = new mongoose.Schema({
         default: 'active'
     },
 
-    isGiftable: {
+    isGifTable: {
         type: Boolean,
         default: false
     },
@@ -68,9 +73,16 @@ const productSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
+    },
+
+    updatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }
 
 }, { timestamps: true });
+
+productSchema.index({ title: 'text', shortDescription: 'text', tags: 'text' })
 
 const Product = mongoose.model("Product", productSchema);
 
