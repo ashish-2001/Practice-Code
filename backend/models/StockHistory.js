@@ -2,6 +2,7 @@ import mongoose from "mongoose"
 import { Schema } from "zod";
 
 const stockHistorySchema = new Schema({
+    
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
