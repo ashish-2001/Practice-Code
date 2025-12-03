@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 import { Schema } from "zod";
 
 const stockHistorySchema = new Schema({
-    
+
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
@@ -25,6 +25,7 @@ const stockHistorySchema = new Schema({
         type: Date,
         default: Date.now
     }
+    
 }, { timestamps: true });
 
 const StockHistory = mongoose.model("StockHistory", stockHistorySchema);
