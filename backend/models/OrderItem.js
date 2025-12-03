@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Schema } from "zod/v3";
 
 const orderItemSchema = new mongoose.Schema({
+
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
@@ -27,6 +28,7 @@ const orderItemSchema = new mongoose.Schema({
     },
 
     attributes: Schema.Types.Mixed
+    
 }, { _id: false });
 
 const OrderItem =  mongoose.model("OrderItem", orderItemSchema);
