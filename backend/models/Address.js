@@ -3,31 +3,31 @@ import mongoose from "mongoose";
 const AddressSchema = new mongoose.Schema({
 
     fullName: {
-        String
+        type: String
     },
 
     phone: {
-        String
+        type: String
     },
 
     addressLine1: {
-        String
+        type: String
     },
 
     addressLine2: {
-        String
+        type: String
     },
 
     city: {
-        String
+        type: String
     },
 
     state: {
-        String
+        type: String
     }, 
 
     postalCode: {
-        String
+        type: String
     },
 
     country: {
