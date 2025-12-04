@@ -1,14 +1,14 @@
 import mongoose from "mongoose";
-import { Schema } from "zod/v3";
 
-const SettingSchema = new mongoose.model({
+
+const SettingSchema = new mongoose.Schema({
     key: {
         type: String,
         required: true,
         unique: true
     },
 
-    value: Schema.Types.Mixed,
+    value: mongoose.Schema.Types.Mixed,
 
     description: String
 }, { timestamps: true });
