@@ -13,7 +13,7 @@ const InventorySchema = new mongoose.Schema({
         type: String,
     },
 
-    attributes: Schema.Types.Mixed,
+    attributes: mongoose.Schema.Types.Mixed,
 
     stock: {
         type: Number,
