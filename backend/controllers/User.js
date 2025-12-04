@@ -247,11 +247,10 @@ async function signin(req, res){
             role: user.role
         }, JWT_SECRET);
 
-        user.token = token;
         user.password = undefined;
 
         res.cookie("token", token, {
-            expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             httpOnly: true,
             sameSite: "lax"
         });
@@ -405,7 +404,7 @@ async function adminDashboard(req, res){
 
         const totalRevenue = revenueResult[0]?.totalRevenue || 0;
 
-        const pendingDeliveries = await Order.countDOcuments({
+        const pendingDeliveries = await Order.countDocuments({
             orderStatus: {
                 $in: ["Processing", "Shipped"]
             }
