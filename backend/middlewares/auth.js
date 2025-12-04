@@ -1,9 +1,9 @@
-import { jwt } from "jsonwebtokens";
-
+import { jwt } from "jsonwebtoken";
 
 async function auth(req, res, next){
 
     try{
+
         const token = req.cookies.token || req.headers("Authorization").replace("Bearer ", "") || req.body.token;
 
         if(!token){
@@ -27,6 +27,7 @@ async function auth(req, res, next){
             error: error.message
         });
     };
+
 };
 
 async function isAdmin(req, res, next){
@@ -36,11 +37,12 @@ async function isAdmin(req, res, next){
         if(req.user.role !== "Admin"){
             return res.status(403).json({
                 success: false,
-                message: "Failed to sign in as admin"
-            })
-        }
+                message: "This is a protected route for admin only!"
+            });
+        };
 
         next();
+
     } catch(error){
         return res.status(500).json({
             success: false,
@@ -48,19 +50,22 @@ async function isAdmin(req, res, next){
             error: error.message
         });
     };
+
 };
 
 function isCustomer(req, res, next){
+
     try{
 
         if(req.user.role !== "Customer"){
             return res.status(403).json({
                 success: false,
-                message: "Failed to sign in as customer!"
+                message: "This is a protected route for customer only!"
             });
         };
 
         next();
+
     } catch(error){
         return res.status(500).json({
             success: false,
@@ -68,7 +73,10 @@ function isCustomer(req, res, next){
             error: error
         });
     };
+
 };
+
+
 export {
     auth,
     isAdmin,
