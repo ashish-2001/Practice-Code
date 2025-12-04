@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Address } from "./Address";
+import { OrderItemSchema } from "./OrderItem";
 
 const OrderSchema = new mongoose.Schema({
 
