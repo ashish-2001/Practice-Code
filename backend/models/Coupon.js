@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const couponSchema = new mongoose.Schema({
+const CouponSchema = new mongoose.Schema({
     
     code: {
         type: String,
@@ -71,9 +71,9 @@ const couponSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-couponSchema.index({ code: 1 });
+CouponSchema.index({ code: 1 });
 
-const Coupon = mongoose.model("Coupon", couponSchema);
+const Coupon = mongoose.model("Coupon", CouponSchema);
 
 export {
     Coupon
