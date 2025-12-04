@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Schema } from "zod/v3";
 
-const inventorySchema = new mongoose.Schema({
+const InventorySchema = new mongoose.Schema({
 
     product: {
         type: mongoose.Schema.Types.ObjectId,
@@ -39,7 +39,7 @@ const inventorySchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
-const Inventory = mongoose.model("Inventory", inventorySchema);
+const Inventory = mongoose.model("Inventory", InventorySchema);
 
 export {
     Inventory
