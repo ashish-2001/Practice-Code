@@ -350,7 +350,7 @@ async function changePassword(req, res){
                 "Your password has been updated successfully!",
                 updatedPassword(
                     updatedUserDetails.email,
-                    `Password has been updated for ${updatedUserDetails.name} ${updatedUserDetails.}`
+                    `Password has been updated for ${updatedUserDetails.name}`
                 )
             );
 
