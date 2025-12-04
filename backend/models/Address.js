@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const addressSchema = new mongoose.Schema({
+const AddressSchema = new mongoose.Schema({
 
     fullName: {
         String
@@ -37,7 +37,7 @@ const addressSchema = new mongoose.Schema({
 
 }, { _id: false });
 
-const Address = mongoose.model('Address', addressSchema);
+const Address = mongoose.model('Address', AddressSchema);
 
 export {
     Address
