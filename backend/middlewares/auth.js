@@ -1,22 +1,20 @@
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
+import { success } from "zod";
 
 async function auth(req, res, next){
 
-    const token = req.cookies.token || req.headers("Authorization").replace("Bearer ", "") || req.body.token;
-
-    if(!token){
-        return res.status(403).json({
-            success: false,
-            message: "Unauthorized!"
-        });
-    };
-
     try{
-        const decode = jwt.verify(token, process.env.JWT_SECRET);
+        const token = req.cookies.token || req.headers("Authorization").replace("Bearer ", "") || req.body.token;
 
-        console.log("Decoded:", decode);
+        if(!token){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized!"
+            });
+        };
+
+        const decode = await jwt.verify(token, process.env.JWT_SECRET);
+
+        console.log("Decoded data:", decode);
 
         req.user = decode;
 
@@ -24,56 +22,52 @@ async function auth(req, res, next){
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "Internal server error!", 
-            error
+            message: "Interval server error!",
+            error: error.message
         });
     };
-}
+};
 
 async function isAdmin(req, res, next){
 
     try{
-        
+
         if(req.user.role !== "Admin"){
             return res.status(403).json({
                 success: false,
-                message: "This is a protected route for Admin only"
-            });
-        };
+                message: "Failed to sign in as admin"
+            })
+        }
 
         next();
-        
-    }catch(error){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error!",
-            error
-        });
-    };
-
-}
-
-async function isCustomer(req, res, next){
-    
-    try{
-        if(req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "This is a protected route for Customer only!"
-            });
-        };
-
-        next();
-
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "Internal server error!",
-            error
+            message: "Interval server error!",
+            error: error.message
         });
     };
-}
+};
 
+function isCustomer(req, res, next){
+    try{
+
+        if(req.user.role !== "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Failed to sign in as customer!"
+            });
+        };
+
+        next();
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Interval server error!",
+            error: error
+        });
+    };
+};
 export {
     auth,
     isAdmin,
