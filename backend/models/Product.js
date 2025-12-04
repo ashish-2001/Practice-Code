@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Schema } from "zod/v3";
 
-const productSchema = new mongoose.Schema({
+const ProductSchema = new mongoose.Schema({
 
     title: {
         type: String,
@@ -81,9 +81,9 @@ const productSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-productSchema.index({ title: 'text', shortDescription: 'text', tags: 'text' })
+ProductSchema.index({ title: 'text', shortDescription: 'text', tags: 'text' })
 
-const Product = mongoose.model("Product", productSchema);
+const Product = mongoose.model("Product", ProductSchema);
 
 export {
     Product
