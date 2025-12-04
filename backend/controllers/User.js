@@ -279,57 +279,47 @@ const changePasswordValidator = z.object({
 async function changePassword(req, res){
 
     try{
+        
         const parsedResult = changePasswordValidator.safeParse(req.body);
 
         if(!parsedResult.success){
-            return res.status(404).json({
+            return res.status(403).json({
                 success: false,
-                message: parsedResult.error.errors[0]?.message || "All fields are required!" 
+                message: "All fields are required!"
+            });
+        }
+
+        const { oldPassword, newPassword, confirmPassword } = parsedResult.data;
+
+        if(newPassword !== confirmPassword){
+            return res.status(402).json({
+                success: true,
+                message: "new password and confirm password should be equal!"
             });
         };
 
-        const {
-            oldPassword,
-            newPassword,
-            confirmPassword
-        } = parsedResult.data;
-
-        const userId = req.user?.userId;
+        const userId = req.user.userId;
 
         const userDetails = await User.findById(userId);
 
-        if(!userDetails){
-            return res.status(404).json({
+        if(oldPassword === newPassword){
+            return res.status(403).json({
                 success: false,
-                message: "User not found. Signup first!"
+                message: "Old password and new password should not be equal!"
             });
         };
 
         const isPasswordMatch = await bcrypt.compare(oldPassword, userDetails.password);
 
         if(!isPasswordMatch){
-            return res.status(404).json({
+            return res.status(403).json({
                 success: false,
-                message: "Old password is incorrect!"
-            });
-        };
-
-        if(oldPassword === newPassword){
-            return res.status(404).json({
-                success: false,
-                message: "Old password can not be same as new password!"
-            });
-        };
-
-        if(newPassword !== confirmPassword){
-            return res.status(404).json({
-                success: false,
-                message: "New password and confirm new password should be same!"
+                message: "Password does not match"
             });
         };
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
+
         const updatedUserDetails = await User.findByIdAndUpdate(
             userId,
             {
@@ -338,14 +328,13 @@ async function changePassword(req, res){
             {
                 new: true
             }
-        );
-
+        )
         try{
 
             const mailResponse = await mailSender(
                 updatedUserDetails.email,
                 "Your password has been updated successfully!",
-                updatedPassword(
+                passwordUpdate(
                     updatedUserDetails.email,
                     `Password has been updated for ${updatedUserDetails.name}`
                 )
@@ -357,7 +346,7 @@ async function changePassword(req, res){
             return res.status(500).json({
                 success: false,
                 message: "Internal server error!",
-                error
+                error: error.message
             });
         };
 
