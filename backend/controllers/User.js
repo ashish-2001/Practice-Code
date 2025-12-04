@@ -1,4 +1,4 @@
-import z, { lowercase, success, uppercase } from "zod";
+import z from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
@@ -7,6 +7,7 @@ import { Otp } from "../models/Otp.js";
 import otpGenerator from "otp-generator";
 import dotenv from "dotenv";
 import { Order } from "../models/Order.js";
+import { ACCOUNT_TYPE } from "../utils"
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -14,16 +15,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if(JWT_SECRET){
     console.warn("Warning: JWT_SECRET is not in environment variables.");
 };
-
-// function detectRole(req){
-//     const origin = (req.headers.origin || "").toLowerCase();
-//     const host = (req.headers.host || "").toLowerCase();
-
-//     const target = host || origin;
-
-//     if(target.includes("admin-prarabdh.in") || target.includes("admin")) return "Admin";
-//     return "Customer";
-// }
 
 const signupValidator = z.object({
     name: z.string().min(1, "Name is required!"),
@@ -118,7 +109,8 @@ async function signup(req, res){
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "Interval server error!"
+            message: "Interval server error!",
+            error: error.message
         });
     };
 };
