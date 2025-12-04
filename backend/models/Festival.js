@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const festivalSchema = new mongoose.Schema({
+const FestivalSchema = new mongoose.Schema({
     
     name: {
         type: String,
@@ -48,9 +48,9 @@ const festivalSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-festivalSchema.index({ startDate: 1, endDate: 1, active: 1 });
+FestivalSchema.index({ startDate: 1, endDate: 1, active: 1 });
 
-const Festival = mongoose.model("Festival", festivalSchema);
+const Festival = mongoose.model("Festival", FestivalSchema);
 
 export {
     Festival
