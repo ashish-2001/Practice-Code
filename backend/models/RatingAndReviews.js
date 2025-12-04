@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const ratingAndReviewSchema = new mongoose.Schema({
+const RatingAndReviewSchema = new mongoose.Schema({
 
     product: {
         type: mongoose.Schema.Types.ObjectId,
@@ -38,9 +38,9 @@ const ratingAndReviewSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-ratingAndReviewSchema.index({ product: 1, approved: 1 });
+RatingAndReviewSchema.index({ product: 1, approved: 1 });
 
-const RatingAndReviews = mongoose.model("RatingAndReviews", ratingAndReviewSchema);
+const RatingAndReviews = mongoose.model("RatingAndReviews", RatingAndReviewSchema);
 
 export {
     RatingAndReviews
