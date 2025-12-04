@@ -1,4 +1,4 @@
-function otpTemplate(otp){
+function otpTemplate(price){
     
     return `<!DOCTYPE html>
     <html>
