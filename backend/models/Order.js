@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { Address } from "./Address";
-import { OrderItemSchema } from "./OrderItem";
+import { Address } from "./Address.js";
+import { OrderItemSchema } from "./OrderItem.js";
 
 const OrderSchema = new mongoose.Schema({
 
