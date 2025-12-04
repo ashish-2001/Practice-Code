@@ -9,7 +9,7 @@ async function auth(req, res, next){
     if(!token){
         return res.status(403).json({
             success: false,
-            message: "Token missing!"
+            message: "Unauthorized!"
         });
     };
 
