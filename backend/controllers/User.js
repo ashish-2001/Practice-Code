@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z, { lowercase, success, uppercase } from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
@@ -124,7 +124,8 @@ async function signup(req, res){
 };
 
 const otpValidator = z.object({
-    email: z.string().email("Invalid email format!")
+    email: z.string().email("Invalid email format!"),
+    role: z.enum([ACCOUNT_TYPE.CUSTOMER, ACCOUNT_TYPE.ADMIN])
 });
 
 async function sendOtp(req, res){
@@ -140,7 +141,7 @@ async function sendOtp(req, res){
             });
         };
 
-        const { email } = parsedResult.data;
+        const { email, role } = parsedResult.data;
 
         const checkUserPresent = await User.findOne({
             email,
@@ -158,7 +159,7 @@ async function sendOtp(req, res){
         let otpExists;
 
         do{
-            otp = otpGenerator.generate(6, {
+            otp = otpGenerator.generate({
                 upperCaseAlphabets: false,
                 lowerCaseAlphabets: false,
                 specialChars: false
@@ -172,6 +173,7 @@ async function sendOtp(req, res){
 
         await Otp.deleteMany({
             email,
+            otp,
             role 
         });
 
@@ -219,8 +221,6 @@ async function signin(req, res){
             email,
             password
         } = parsedResult.data;
-
-        const role = (req.body.role && String(req.body.role).trim().toLowerCase()) || detectRole(req);
 
         const user = await User.findOne({
             email,
