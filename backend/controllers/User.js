@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
@@ -15,15 +15,15 @@ if(JWT_SECRET){
     console.warn("Warning: JWT_SECRET is not in environment variables.");
 };
 
-function detectRole(req){
-    const origin = (req.headers.origin || "").toLowerCase();
-    const host = (req.headers.host || "").toLowerCase();
+// function detectRole(req){
+//     const origin = (req.headers.origin || "").toLowerCase();
+//     const host = (req.headers.host || "").toLowerCase();
 
-    const target = host || origin;
+//     const target = host || origin;
 
-    if(target.includes("admin-prarabdh.in") || target.includes("admin")) return "Admin";
-    return "Customer";
-}
+//     if(target.includes("admin-prarabdh.in") || target.includes("admin")) return "Admin";
+//     return "Customer";
+// }
 
 const signupValidator = z.object({
     name: z.string().min(1, "Name is required!"),
@@ -31,6 +31,7 @@ const signupValidator = z.object({
     phone: z.string().regex(/^(\+91)?[6-9]\d{9}$/, "Please enter a valid contact number!"),
     password: z.string().min(6, "Password must be of at least 6 characters!"),
     confirmPassword: z.string().min(6, "Confirm Password must be of at least 6 characters!"),
+    role: z.enum([ACCOUNT_TYPE.CUSTOMER, ACCOUNT_TYPE.ADMIN]),
     otp: z.string().min(6, "Otp is required!")
 });
 
@@ -38,33 +39,24 @@ async function signup(req, res){
 
     try{
 
-        const parsedResult = signupValidator.safeParse(req.body);
+        const parsedResult = signupValidator.safeParse(req.body) ;
 
-        if(!parsedResult.success){
-            return res.status(404).json({
+        if(parsedResult.success){
+            return res.status(403).json({
                 success: false,
-                message: parsedResult.error.errors[0]?.message || "All fields are required!"
+                message: "All fields are required!"
             });
         };
 
         const {
-            firstName,
-            lastName,
+            name,
             email,
+            phone,
             password,
             confirmPassword,
-            contactNumber,
+            role,
             otp
         } = parsedResult.data;
-
-        const role = (req.body.role && String(req.body.role)?.trim().toLowerCase()) || detectRole(req);
-
-        if(password !== confirmPassword){
-            return res.status(404).json({
-                success: false,
-                message: "Password and confirm password should match!"
-            })
-        }
 
         const existingUser = await User.findOne({
             email,
@@ -72,72 +64,61 @@ async function signup(req, res){
         });
 
         if(existingUser){
-            return res.status(404).json({
+            return res.status(402).json({
                 success: false,
                 message: "User already exists!"
             });
         };
 
+        const profileImage = req.files.profileImage;
+        
         const otpRecord = await Otp.findOne({
             email,
             role,
-            otp
-        });
+            otp: otp.toString()
+        }).sort({ createdAt: -1 });
 
-        if(!otpRecord){
-            return res.status(404).json({
+        if(!otpRecord || otpRecord.otp !== otp.toString()){
+            return res.status(403).json({
                 success: false,
-                message: "Otp is invalid!"
-            });
-        };
-
-        if(otpRecord.expiresAt < new Date()){
-            return res.status(400).json({
-                success: false,
-                message: "Otp expired!"
-            });
-        };
+                message: "Invalid otp!"
+            })
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
-            firstName,
-            lastName,
-            email,
+            name: name,
+            email: email,
+            phone: phone,
             password: hashedPassword,
-            contactNumber,
-            role
+            role: role,
+            profileImage: profileImage
         });
 
         await Otp.deleteMany({
-            email, role 
-        });
+            _id: otpRecord._id
+        })
 
-        const token = jwt.sign({
-            userId: user._id,
-            role: user.role,
-            email: user.email
+        const token = await jwt.sign({
+            userId: req.user._id,
+            role: user._id,
+            email: user._id
         }, JWT_SECRET);
 
         user.password = undefined;
 
-        res.cookie("token", token, {
-            expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-            httpOnly: true,
-            sameSite: "lax"
-        })
-
         return res.status(200).json({
-            success:true,
+            success: true,
             message: "User registered successfully!",
             token,
             user
         });
+
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "Internal server error!",
-            error: error.message || error
+            message: "Interval server error!"
         });
     };
 };
@@ -160,8 +141,6 @@ async function sendOtp(req, res){
         };
 
         const { email } = parsedResult.data;
-
-        const role = (req.body.role && String(req.body.role).trim().toLowerCase()) || detectRole(req);
 
         const checkUserPresent = await User.findOne({
             email,
@@ -371,7 +350,7 @@ async function changePassword(req, res){
                 "Your password has been updated successfully!",
                 updatedPassword(
                     updatedUserDetails.email,
-                    `Password has been updated for ${updatedUserDetails.firstName} ${updatedUserDetails.lastName}`
+                    `Password has been updated for ${updatedUserDetails.name} ${updatedUserDetails.}`
                 )
             );
 
