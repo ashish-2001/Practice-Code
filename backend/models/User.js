@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
             postalCode: String,
             country: {
                 type: String,
-                default: 'India'
+                default: 'Bharat'
             }
         }
     ],
