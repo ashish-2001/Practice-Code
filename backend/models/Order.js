@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Address } from "./Address";
 
 const OrderSchema = new mongoose.Schema({
 
