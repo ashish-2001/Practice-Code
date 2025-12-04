@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Schema } from "zod/v3";
 
-const settingSchema = new mongoose.model({
+const SettingSchema = new mongoose.model({
     key: {
         type: String,
         required: true,
@@ -13,9 +13,9 @@ const settingSchema = new mongoose.model({
     description: String
 }, { timestamps: true });
 
-settingSchema.index({ key: 1 }, { unique: true });
+SettingSchema.index({ key: 1 }, { unique: true });
 
-const Setting = mongoose.model('Setting', settingSchema);
+const Setting = mongoose.model('Setting', SettingSchema);
 
 export {
     Setting
