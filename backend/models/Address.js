@@ -1,0 +1,44 @@
+import mongoose from "mongoose";
+
+const addressSchema = new mongoose.Schema({
+
+    name: {
+        String
+    },
+
+    phone: {
+        String
+    },
+
+    addressLine1: {
+        String
+    },
+
+    addressLine2: {
+        String
+    },
+
+    city: {
+        String
+    },
+
+    state: {
+        String
+    }, 
+
+    postalCode: {
+        String
+    },
+
+    country: {
+        type: String,
+        default: 'Bharat'
+    }
+
+}, { _id: false });
+
+const Address = mongoose.model('Address', addressSchema);
+
+export {
+    Address
+}
