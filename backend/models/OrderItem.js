@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const orderItemSchema = new mongoose.Schema({
+const OrderItemSchema = new mongoose.Schema({
 
     product: {
         type: mongoose.Schema.Types.ObjectId,
@@ -31,7 +31,7 @@ const orderItemSchema = new mongoose.Schema({
 
 }, { _id: false });
 
-const OrderItem =  mongoose.model("OrderItem", orderItemSchema);
+const OrderItem =  mongoose.model("OrderItem", OrderItemSchema);
 
 export {
     OrderItem
