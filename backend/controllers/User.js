@@ -223,8 +223,7 @@ async function signin(req, res){
         } = parsedResult.data;
 
         const user = await User.findOne({
-            email,
-            role
+            email
         });
 
         if(!user){
