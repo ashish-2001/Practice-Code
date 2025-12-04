@@ -2,7 +2,7 @@ import mongoose, { Error } from "mongoose";
 import { otpTemplate } from "../mail/templates/emailVerificationTemplate.js";
 import { mailSender } from "../utils/mailSender.js";
 
-const otpSchema = new mongoose.Schema({
+const OtpSchema = new mongoose.Schema({
     
     otp: {
         type: String 
@@ -43,7 +43,7 @@ async function sendVerificationEmail(email, otp){
     }
 }
 
-otpSchema.pre("save", async function (next){
+OtpSchema.pre("save", async function (next){
     console.log("New document saved to the database");
 
     if(this.isNew){
@@ -53,7 +53,7 @@ otpSchema.pre("save", async function (next){
     next();
 });
 
-const Otp = mongoose.model("Otp", otpSchema);
+const Otp = mongoose.model("Otp", OtpSchema);
 
 export {
     Otp
