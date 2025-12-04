@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema({
 
-    name: {
+    fullName: {
         String
     },
 
