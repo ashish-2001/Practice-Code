@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import { Schema } from "zod/v3";
 
-const transactionSchema = new mongoose.Schema({
+const TransactionSchema = new mongoose.Schema({
 
     order: {
         type: mongoose.Schema.Types.ObjectId,
@@ -31,7 +30,7 @@ const transactionSchema = new mongoose.Schema({
         type: String
     },
 
-    providerResponse: Schema.Types.Mixed,
+    providerResponse: mongoose.Schema.Types.Mixed,
 
     createdAt: {
         type: Date,
@@ -40,7 +39,7 @@ const transactionSchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
-const Transaction = mongoose.model("Transaction", transactionSchema);
+const Transaction = mongoose.model("Transaction", TransactionSchema);
 
 export {
     Transaction

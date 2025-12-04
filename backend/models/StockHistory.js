@@ -1,7 +1,6 @@
 import mongoose from "mongoose"
-import { Schema } from "zod";
 
-const stockHistorySchema = new Schema({
+const StockHistorySchema = new mongoose.Schema({
 
     product: {
         type: mongoose.Schema.Types.ObjectId,
@@ -28,7 +27,7 @@ const stockHistorySchema = new Schema({
     
 }, { timestamps: true });
 
-const StockHistory = mongoose.model("StockHistory", stockHistorySchema);
+const StockHistory = mongoose.model("StockHistory", StockHistorySchema);
 
 export {
     StockHistory
