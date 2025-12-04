@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { Schema } from "zod/v3";
 
 const ProductSchema = new mongoose.Schema({
 
@@ -56,7 +55,7 @@ const ProductSchema = new mongoose.Schema({
         index: true
     }],
 
-    attributes: Schema.Types.Mixed,
+    attributes: mongoose.Schema.Types.Mixed,
 
     status: {
         type: String,
