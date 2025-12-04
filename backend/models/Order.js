@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema({
+const OrderSchema = new mongoose.Schema({
 
     orderNumber: {
         type: String,
@@ -14,7 +14,7 @@ const orderSchema = new mongoose.Schema({
         ref: 'User'
     },
 
-    items: [orderItemSchema],
+    items: [OrderItemSchema],
 
     shippingAddress: Address,
 
@@ -98,10 +98,10 @@ const orderSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-orderSchema.index({ orderNumber: 1 });
-orderSchema.index({ user: 1, orderStatus: 1 });
+OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index({ user: 1, orderStatus: 1 });
 
-const Order = mongoose.model("Order", orderSchema);
+const Order = mongoose.model("Order", OrderSchema);
 
 export {
     Order
