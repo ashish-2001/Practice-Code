@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const bannerSchema = new mongoose.Schema({
+const BannerSchema = new mongoose.Schema({
     
     title: {
         type: String
@@ -36,9 +36,9 @@ const bannerSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-bannerSchema.index({ active: 1, startDate: 1, endDate: 1 });
+BannerSchema.index({ active: 1, startDate: 1, endDate: 1 });
 
-const Banner = mongoose.model("Banner", bannerSchema);
+const Banner = mongoose.model("Banner", BannerSchema);
 
 export {
     Banner
