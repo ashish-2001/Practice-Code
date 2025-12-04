@@ -43,4 +43,4 @@ const Transaction = mongoose.model("Transaction", TransactionSchema);
 
 export {
     Transaction
-}
+};
