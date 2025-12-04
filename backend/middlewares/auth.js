@@ -1,4 +1,4 @@
-import { jwt } from "jsonwebtoken";
+import { jwt } from "jsonwebtokens";
 
 
 async function auth(req, res, next){
