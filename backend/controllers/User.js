@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
@@ -53,6 +53,13 @@ async function signup(req, res){
             email,
             role
         });
+
+        if(password !== confirmPassword){
+            return res.status(402).json({
+                success: true,
+                message: "Password and confirm password should be equal!"
+            })
+        }
 
         if(existingUser){
             return res.status(402).json({
