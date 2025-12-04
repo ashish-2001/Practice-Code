@@ -63,7 +63,7 @@ const ProductSchema = new mongoose.Schema({
         default: 'active'
     },
 
-    isGifTable: {
+    isGiftable: {
         type: Boolean,
         default: false
     },
