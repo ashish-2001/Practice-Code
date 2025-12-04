@@ -11,10 +11,10 @@ const FestivalSchema = new mongoose.Schema({
         type: String
     },
 
-    productIds: {
+    productIds: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
-    },
+    }],
 
     startDate: {
         type: Date,
