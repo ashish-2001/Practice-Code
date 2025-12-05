@@ -2,6 +2,7 @@ import z, { success } from "zod";
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { uploadImageToCloudinary } from "../utils/imageUploader.js";
+import { response } from "express";
 
 const categoryValidator = z.object({
     categoryName: z.string().min(1, "Category name is too small!"),
@@ -193,27 +194,23 @@ async function getCategoryPageDetails(req, res){
 };
 
 const addProductToCategoryValidator = z.object({
-    categoryId: z.string().min(1, "Category id is is required!"),
-    productId: z.string().min(1, "Product id is required!")
+    categoryId: z.string().min(1, "Invalid category id"),
+    productId: z.string().min(1, "Invalid product id")
 });
 
-async function addProductToCategory(req, res){
+async function addProductToTheCategory(req, res){
 
     try{
-        
         const parsedResult = addProductToCategoryValidator.safeParse(req.body);
 
         if(!parsedResult.success){
-            return res.status(400).json({
+            return res.status(403).json({
                 success: false,
                 message: "All fields are required!"
             });
         };
 
-        const {
-            categoryId,
-            productId
-        } = parsedResult.data;
+        const { categoryId, productId } = parsedResult.data;
 
         const category = await Category.findById(categoryId);
 
@@ -221,8 +218,8 @@ async function addProductToCategory(req, res){
             return res.status(404).json({
                 success: false,
                 message: "Category not found!"
-            });
-        };
+            })
+        }
 
         const product = await Product.findById(productId);
 
@@ -234,31 +231,32 @@ async function addProductToCategory(req, res){
         };
 
         if(category.products.includes(productId)){
-            return res.status(409).json({
+            return res.status(402).json({
                 success: false,
                 message: "Product already exists in the category!"
             });
         };
 
         category.products.push(productId);
-        await category.save();
+        await Category.save();
 
         return res.status(200).json({
             success: true,
-            message: "Product added to the category successfully!"
+            message: "Product added to the category!"
         });
     } catch(error){
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
-            error
+            error: error.message
         });
-    }
+    };
 }
+
 
 export {
     createCategory,
     getAllCategories,
-    categoryPageDetails,
-    addProductToCategory
+    getCategoryPageDetails,
+    addProductToTheCategory
 }
