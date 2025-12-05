@@ -103,18 +103,94 @@ async function getCategoryPageDetails(req, res){
 
         const categoryId = req.body;
 
-        const selectedCategory = await Category.findById(categoryId);
+        const selectedCategory = await Category.findById(categoryId)
+        .populate({
+            path: "products",
+            match: {
+                status: "Published"
+            },
+            populate: ([{
+                path: "Admin"
+            },
+            {
+                path: "ratingAndReviews"
+            }])
+        });
 
         if(!selectedCategory){
-            return res.status(404).son({
+            return res.status(404).json({
                 success: false,
                 message: "Category not found!"
             });
         };
 
-        
-    }
-}
+        if(selectedCategory.products.length === 0){
+            console.log("No products found for the selected category.")
+            return res.status(404).json({
+                success: false,
+                message: "No products found for the selected category."
+            })
+        };
+
+        const selectedProducts = selectedCategory.products;
+
+        const categoryExceptSelected = await Category.find({
+        _id: {
+            $ne: categoryId
+        }})
+        .populate({
+            path: "products",
+            match: {
+                status: "Published"
+            },
+                populate: ([{
+                    path: "Admin"
+                },
+                {
+                    path: "ratingAndReviews"
+                }
+            ])
+        });
+
+        const differentProducts = [];
+
+        for(const category of categoryExceptSelected){
+            differentProducts.push(...category.products);
+        };
+
+        const allCategories = await Category.find().populate({
+            path: "products",
+            match: {
+                status: "Published"
+            },
+            populate: ([{
+                path: "Admin"
+            },
+            {
+                path: "ratingAndReviews"
+            }
+            ])
+        });
+
+        const allProducts = allCategories.flatMap((category) => category.products);
+        const mostSellingProducts = allProducts.sort((a, b) => b.sold - a.sold).slice(0, 10);
+
+        return res.status(200).json({
+            success: true,
+            message: "All products fetched successfully!",
+            data: {
+                selectedProducts,
+                differentProducts,
+                mostSellingProducts
+            }
+        });
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!"
+        });
+    };
+};
 
 const addProductToCategoryValidator = z.object({
     categoryId: z.string().min(1, "Category id is is required!"),
