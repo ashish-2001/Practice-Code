@@ -16,9 +16,9 @@ const CategorySchema = new mongoose.Schema({
         type: String
     },
 
-    parent: {
+    products: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category'
+        ref: 'Product'
     }
 
 }, { timestamps: true });

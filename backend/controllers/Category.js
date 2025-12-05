@@ -4,7 +4,7 @@ import { Product } from "../models/Product.js";
 import { uploadImageToCloudinary } from "../utils/imageUploader.js";
 
 const categoryValidator = z.object({
-    categoryName: z.string().min(1, "Category is too small!"),
+    categoryName: z.string().min(1, "Category name is too small!"),
     categoryDescription: z.string().min(1, "Category description is too small!")
 });
 
@@ -13,80 +13,65 @@ async function createCategory(req, res){
     try{
         const parsedResult = categoryValidator.safeParse(req.body);
 
-        if(!parsedResult.success){
-            return res.status(400).json({
+        if(parsedResult.success){
+            return res.status(403).json({
                 success: false,
                 message: "All fields are required!"
             });
         };
 
-        const {
-            categoryName,
+        const { categoryName,
             categoryDescription
         } = parsedResult.data;
+
+        const userId = req.user.userId;
 
         const existingCategory = await Category.findOne({
             categoryName: categoryName.trim()
         });
 
         if(existingCategory){
-            return res.status(400).json({
+            return res.status(402).json({
                 success: false,
-                message: "Category already exists!"
+                message: "Category name already exists!"
             });
         };
 
-        
-        const createdBy = req.user._id;
+        let thumbnailImage = req.files?.thumbnailImage;
 
-        if(!createdBy){
-            return res.status(401).json({
-                success: false,
-                message: "Unauthorized. User not found!"
-            });
-        };
+        if(thumbnailImage){
+            const uploaded = await uploadImageToCloudinary(
+                thumbnailImage,
+                "categories",
+                1000,
+                1000
+            );
 
-        let thumbnailImage = "";
-
-        if(req.files?.thumbnailImage){
-            try{
-                const uploaded = await uploadImageToCloudinary(
-                    req.files.thumbnailImage,
-                    "categories",
-                    1000,
-                    1000
-                )
-
-                thumbnailImage = uploaded.secure_url
-            }catch(error){
-                return res.status(500).json({
-                    success: false,
-                    message: "Internal server error!",
-                    error: error.message
-                })
-            }
+            thumbnailImage = uploaded.secure_url;
         }
 
         const categoryDetails = await Category.create({
             categoryName: categoryName.trim(),
-            categoryDescription: categoryDescription.trim(),
+            categoryDescription: categoryDescription,
             thumbnailImage,
-            createdBy
+            userId
         });
 
         return res.status(200).json({
             success: true,
-            message: "Category created successfully!",
-            data: categoryDetails
+            message: "Category created successful!",
+            categoryDetails
         });
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "internal server error!",
-            error
+            message: "Internal server error!",
+            error: error.message
         });
     };
-};
+}
+
+
 
 async function showAllCategories(req, res){
     try{
