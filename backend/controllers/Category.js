@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { uploadImageToCloudinary } from "../utils/imageUploader.js";
@@ -193,6 +193,28 @@ async function getCategoryPageDetails(req, res){
         });
     };
 };
+
+const editCategoryValidator = z.object({
+    categoryName: z.string().min(1, "Category name is required!"),
+    categoryDescription: z.string().min(1, "Category description is required!"),
+});
+
+async function editCategories(req, res){
+
+    try{
+
+        const parsedResult = editCategoryValidator.safeParse(req.body);
+
+        if(!parsedResult.success){
+            return res.status(403).json({
+                success: false,
+                message: "All fields are required!"
+            });
+        };
+
+        
+    }
+}
 
 const addProductToCategoryValidator = z.object({
     categoryId: z.string().min(1, "Invalid category id"),
