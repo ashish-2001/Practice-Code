@@ -194,28 +194,6 @@ async function getCategoryPageDetails(req, res){
     };
 };
 
-const editCategoryValidator = z.object({
-    categoryName: z.string().min(1, "Category name is required!"),
-    categoryDescription: z.string().min(1, "Category description is required!"),
-});
-
-async function editCategories(req, res){
-
-    try{
-
-        const parsedResult = editCategoryValidator.safeParse(req.body);
-
-        if(!parsedResult.success){
-            return res.status(403).json({
-                success: false,
-                message: "All fields are required!"
-            });
-        };
-
-        
-    }
-}
-
 const addProductToCategoryValidator = z.object({
     categoryId: z.string().min(1, "Invalid category id"),
     productId: z.string().min(1, "Invalid product id")
@@ -276,10 +254,70 @@ async function addProductToTheCategory(req, res){
     };
 }
 
+const editCategoryValidator = z.object({
+    categoryName: z.string().min(1, "Category name is required!"),
+    categoryDescription: z.string().min(1, "Category description is required!"),
+});
+
+async function editCategories(req, res){
+
+    try{
+
+        const parsedResult = editCategoryValidator.safeParse(req.body);
+
+        if(!parsedResult.success){
+            return res.status(403).json({
+                success: false,
+                message: "All fields are required!"
+            });
+        };
+
+        const { categoryName, categoryDescription } = parsedResult.data;
+
+        const thumbnailImage = req.files?.thumbnailImage;
+
+        const categoryId = req.params;
+
+        const category = await Category.findById(categoryId);
+
+        if(!category){
+            return res.status(404).json({
+                success: false,
+                message: "Category not found!"
+            });
+        };
+
+        if(categoryName){
+            category.categoryName = categoryName;
+        }
+
+        if(categoryDescription){
+            category.categoryDescription = categoryDescription;
+        }
+
+        if(thumbnailImage){
+            category.thumbnailImage = thumbnailImage;
+        }
+
+        await category.save();
+
+        return res.status(200).json({
+            success: false,
+            message: "Category updated successfully!"
+        });
+    } catch(error){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: error.message
+        })
+    }
+}
 
 export {
     createCategory,
     getAllCategories,
     getCategoryPageDetails,
-    addProductToTheCategory
+    addProductToTheCategory,
+    editCategories
 }
