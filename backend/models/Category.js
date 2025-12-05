@@ -14,11 +14,6 @@ const CategorySchema = new mongoose.Schema({
 
     thumbnailImage: {
         type: String
-    },
-
-    products: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product'
     }
 
 }, { timestamps: true });
