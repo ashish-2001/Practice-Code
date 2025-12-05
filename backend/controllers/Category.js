@@ -97,56 +97,24 @@ async function getAllCategories(req, res){
     };
 };
 
-async function categoryPageDetails(req, res){
+async function getCategoryPageDetails(req, res){
 
     try{
-        const { categoryId } = req.body;
+
+        const categoryId = req.body;
 
         const selectedCategory = await Category.findById(categoryId);
 
         if(!selectedCategory){
-            return res.status(404).json({
+            return res.status(404).son({
                 success: false,
                 message: "Category not found!"
             });
         };
 
-        const selectedProducts = await Product.find({
-            category: categoryId
-        }).populate("createdBy", "firstName lastName email").exec();
-
-        if(!selectedProducts.length){
-            return res.status(401).json({
-                success: false,
-                message: "Products not found in the the selected category!"
-            });
-        };
-        const differentProducts = await Product.find({
-            category: {
-                $ne: categoryId
-            }
-        }).populate("createdBy", "firstName lastName email").limit(10);
-
-        const mostSellingProducts = await Product.find({}).populate("createdBy", "firstName lastName email").sort({
-            sold: -1
-        }).limit(10);
-
-        return res.status(200).json({
-            success: true,
-            message: "Product data fetched successfully!",
-            selectedCategory,
-            selectedProducts,
-            differentProducts,
-            mostSellingProducts
-        });
-    } catch(error){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error!",
-            error
-        });
-    };
-};
+        
+    }
+}
 
 const addProductToCategoryValidator = z.object({
     categoryId: z.string().min(1, "Category id is is required!"),
