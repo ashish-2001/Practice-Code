@@ -1,8 +1,8 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { uploadImageToCloudinary } from "../utils/imageUploader.js";
-import { response } from "express";
+
 
 const categoryValidator = z.object({
     categoryName: z.string().min(1, "Category name is too small!"),
@@ -74,7 +74,7 @@ async function getAllCategories(req, res){
 
         const allCategories = await Category.findOne({}, {
             categoryName: true,
-            categoryDescription: categoryDescription
+            categoryDescription: true
         });
 
         if(!allCategories || allCategories.length < 1 ){
@@ -188,7 +188,8 @@ async function getCategoryPageDetails(req, res){
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "Internal server error!"
+            message: "Internal server error!",
+            error: error.message
         });
     };
 };
