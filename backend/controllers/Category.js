@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
 import { uploadImageToCloudinary } from "../utils/imageUploader.js";
@@ -67,33 +67,31 @@ async function createCategory(req, res){
     };
 }
 
-async function showAllCategories(req, res){
-    try{
-        const allCategories = await Category.find({}, {
-            categoryName: true,
-            categoryDescription: true,
-            thumbnailImage: true,
-            createdBy: true
-        }).populate("createdBy", "firstName lastName email");
+async function getAllCategories(req, res){
 
-        if(!allCategories || allCategories.length === 0){
-            return res.status(400).json({
+    try{
+
+        const allCategories = await Category.findOne({}, {
+            categoryName: true,
+            categoryDescription: categoryDescription
+        });
+
+        if(!allCategories || allCategories.length < 1 ){
+            return res.status(404).json({
                 success: false,
-                message: "Categories not found!"
+                message: "Category not found!"
             });
         };
 
         return res.status(200).json({
-            success: true,
-            message: "All categories fetched successfully!",
-            data: allCategories
+            success: false,
+            message: "ALl categories fetched successfully!",
+            allCategories
         });
-
     } catch(error){
         return res.status(500).json({
             success: false,
-            message: "Internal server error!",
-            error
+            message: "Internal server error!"
         });
     };
 };
@@ -215,7 +213,7 @@ async function addProductToCategory(req, res){
 
 export {
     createCategory,
-    showAllCategories,
+    getAllCategories,
     categoryPageDetails,
     addProductToCategory
 }
