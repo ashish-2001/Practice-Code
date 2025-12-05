@@ -14,6 +14,11 @@ const CategorySchema = new mongoose.Schema({
 
     thumbnailImage: {
         type: String
+    },
+
+    products: {
+        type: String,
+        ref: "Product"
     }
 
 }, { timestamps: true });
