@@ -11,33 +11,30 @@ const categoryValidator = z.object({
 async function createCategory(req, res){
 
     try{
+
         const parsedResult = categoryValidator.safeParse(req.body);
 
-        if(parsedResult.success){
+        if(!parsedResult.success){
             return res.status(403).json({
-                success: false,
+                success: true,
                 message: "All fields are required!"
             });
         };
 
-        const { categoryName,
-            categoryDescription
-        } = parsedResult.data;
+        let thumbnailImage = req.files?.thumbnailImage;
 
-        const userId = req.user.userId;
+        const { categoryName, categoryDescription } = parsedResult.data;
 
         const existingCategory = await Category.findOne({
             categoryName: categoryName.trim()
         });
 
         if(existingCategory){
-            return res.status(402).json({
+            return res.status(403).json({
                 success: false,
-                message: "Category name already exists!"
+                message: "Category already exists!"
             });
         };
-
-        let thumbnailImage = req.files?.thumbnailImage;
 
         if(thumbnailImage){
             const uploaded = await uploadImageToCloudinary(
@@ -45,21 +42,20 @@ async function createCategory(req, res){
                 "categories",
                 1000,
                 1000
-            );
+            )
 
             thumbnailImage = uploaded.secure_url;
         }
 
         const categoryDetails = await Category.create({
-            categoryName: categoryName.trim(),
-            categoryDescription: categoryDescription,
-            thumbnailImage,
-            userId
+            categoryName: categoryName,
+            categoryDescription,
+            thumbnailImage
         });
 
         return res.status(200).json({
             success: true,
-            message: "Category created successful!",
+            message: "Category created successfully!",
             categoryDetails
         });
     } catch(error){
@@ -70,8 +66,6 @@ async function createCategory(req, res){
         });
     };
 }
-
-
 
 async function showAllCategories(req, res){
     try{
