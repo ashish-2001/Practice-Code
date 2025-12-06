@@ -289,15 +289,15 @@ async function editCategories(req, res){
 
         if(categoryName){
             category.categoryName = categoryName;
-        }
+        };
 
         if(categoryDescription){
             category.categoryDescription = categoryDescription;
-        }
+        };
 
         if(thumbnailImage){
             category.thumbnailImage = thumbnailImage;
-        }
+        };
 
         await category.save();
 
@@ -312,7 +312,7 @@ async function editCategories(req, res){
             error: error.message
         })
     }
-}
+};
 
 export {
     createCategory,
@@ -320,4 +320,4 @@ export {
     getCategoryPageDetails,
     addProductToTheCategory,
     editCategories
-}
+};

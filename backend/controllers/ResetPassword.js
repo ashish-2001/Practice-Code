@@ -149,4 +149,4 @@ async function resetPassword(req, res){
 export {
     resetPasswordToken,
     resetPassword
-}
+};
