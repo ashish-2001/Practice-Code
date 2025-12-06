@@ -50,7 +50,7 @@ async function resetPasswordToken(req, res){
             email,
             "Reset Password email",
             `Link for email verification is ${url}.To reset your password click on the link.`
-        )
+        );
 
         return res.status(200).json({
             success: true,
@@ -114,7 +114,7 @@ async function resetPassword(req, res){
                 success: false,
                 message: "Reset token has expired! Please request a new one."
             })
-        }
+        };
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
