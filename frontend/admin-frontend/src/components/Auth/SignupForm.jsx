@@ -53,7 +53,7 @@ function SignupForm(){
             password: "",
             confirmPassword: ""
         });
-    }
+    };
 
     return(
         <div>
@@ -162,7 +162,7 @@ function SignupForm(){
                         </span>
                     </label>
 
-                    <button type="submit">sign up!</button>
+                    <button type="submit">Sign up!</button>
                 </div>
             </form>
         </div>
