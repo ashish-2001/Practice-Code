@@ -45,7 +45,7 @@ function ContactForm(){
 
                 const res = await apiConnector("POST", contactEndpoint.CONTACT_US_API, payload)
 
-                if(reset.data.success === true){
+                if(res.data.success === true){
                     toast.success("Message sent successfully");
                 } else{
                     toast.error("Failed to send message");
@@ -64,8 +64,45 @@ function ContactForm(){
             <div>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div>
-                        
+                        <div>
+                            <label htmlFor="name">Name</label>
+                            <input type="text" name="name" placeholder="Enter name!"
+                            {...register("name", { required: true })}/>
+                            {
+                                errors.name && <span>Enter name*</span>
+                            }
+                        </div>
+                        <div>
+                            <label htmlFor="email"> Email:</label>
+                            <input type="email" name="email" placeholder="Enter Email!" 
+                                {...register("email", { required: true })}/>
+                                {
+                                    errors.email && <span>Enter email*</span>
+                                }
+                        </div>
+                        <div>
+                            <label htmlFor="contactNumber"> Contact Number:</label>
+                            <input type="tel" name="contactNumber" id="contactNumber" placeholder="+913823493824"
+                            {...register("contactNumber", {
+                                required: "Please enter contact number",
+                                maxLength: { value: 12, message: "Enter a valid contact number"},
+                                minLength: { value: 8, message: "Enter a valid contact number"}
+                            })}/>
+                            {
+                                errors.contactNumber && <span>{errors.contactNumber.message}</span>
+                            }
+                        </div>
                     </div>
+
+                    <div>
+                        <label htmlFor="message">Message:</label>
+                        <textarea name="message" id="message" cols="30" rows="7" placeholder="Enter your message here" 
+                        {...register("message", { required: true })}/>
+                        {
+                            errors.message && <span>Enter message*</span>
+                        }
+                    </div>
+                    <button type="submit">Send Message!</button>
                 </form>
             </div>
         )
