@@ -24,7 +24,7 @@ function Template({ title, formType }){
             }
         </div>
     )
-}
+};
 
 export {
     Template
