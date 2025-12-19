@@ -62,7 +62,12 @@ function SigninForm(){
                             Forgot Password
                         </Link>
                     </label>
-                    <button type="submit">Sign in!</button>
+                    <button 
+                        type="submit"
+                        onClick={() => dispatch(setProgress(60))}
+                    >
+                        Sign in!
+                    </button>
                 </div>
             </form>
         </div>
