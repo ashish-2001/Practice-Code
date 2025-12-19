@@ -1,12 +1,17 @@
-import { useState } from "react"
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 
 function SigninForm(){
 
-    const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [formData, setFormData] = useState({
         email: "",
         password: ""
     });
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const { email, password } = formData;
     
@@ -19,8 +24,7 @@ function SigninForm(){
 
     const handleOnSubmit = (e) => {
         e.preventDefault();
-
-        
+        dispatch(login(email, password, navigate));
     }
 
     return (
@@ -54,6 +58,9 @@ function SigninForm(){
                             onChange={handleOnChange}
                             className=""
                         />
+                        <Link to="/forgot-password">
+                            Forgot Password
+                        </Link>
                     </label>
                     <button type="submit">Sign in!</button>
                 </div>
