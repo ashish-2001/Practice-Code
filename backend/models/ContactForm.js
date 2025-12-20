@@ -41,8 +41,8 @@ const ContactFormSchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
-const Contact = mongoose.model("Contact", ContactFormSchema);
+const ContactForm = mongoose.model("Contact", ContactFormSchema);
 
 export {
-    Contact
+    ContactForm
 }
