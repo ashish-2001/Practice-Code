@@ -285,7 +285,6 @@ export {
     createAddress,
     getAllAddress,
     getSingleAddress,
-    getUserAddress,
     updateAddress,
     deleteAddress
 }
