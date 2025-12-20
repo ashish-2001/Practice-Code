@@ -34,7 +34,7 @@ async function createMessageForm(req, res){
         if(contactNumber.length !== 10 ){
             return res.status(403).json({
                 success: false,
-                message: "Contact number is invalid!"
+                message: "Contact number is small!"
             })
         }
 
@@ -84,7 +84,7 @@ async function getAllFormMessages(req, res){
         }
 
         const messages = await ContactForm.find({})
-        .populate("user", "firstName lastName email contactNumber").sort({
+        .populate("user", "firstName lastName email contactNumber message").sort({
             createdAt: -1
         });
 
