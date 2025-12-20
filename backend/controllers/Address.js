@@ -98,18 +98,20 @@ async function createAddress(req, res){
 async function getAllAddress(req, res){
 
     try{
-        if(req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "Only customers can view their address!"
-            });
+
+        const { role, _id: userId } = req.user;
+
+        let addresses;
+
+        if(role === "Admin"){
+            addresses = (await Address.find({})).sort({ createdAt: -1, isDefault: -1 });
         }
-
-        const userId = req.user._id;
-
-        const addresses = await Address.find({
-            user: userId
-        }).sort({ isDefault: -1, createdAt: -1 });
+        
+        else if(role === "Customer"){
+            addresses = await Address.find({
+                user: userId
+            }).sort({ createdAt: -1, isDefault: -1 })
+        };
 
         return res.status(200).json({
             success: false,
