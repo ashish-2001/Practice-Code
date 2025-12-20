@@ -5,7 +5,7 @@ import { User } from "../models/User";
 import mongoose from "mongoose";
 
 const inventoryValidator = z.object({
-    product: z.string().min(1, "Product id is required!"),
+    productId: z.string().min(1, "Product id is required!"),
     change: z.number().min(1, "Inventory is required!"),
     reason: z.enum(["Purchase", "Order Cancelled", "Stock update"]),
 })
@@ -28,7 +28,6 @@ async function createInventory(req, res){
 
         const {
             productId,
-            createdBy,
             reason,
             change
         } = parsedResult.data;
@@ -65,7 +64,6 @@ async function createInventory(req, res){
         await productData.save({ session });
 
         const inventory = await Inventory.create([{
-            createdBy,
             product: productId,
             reason,
             change
@@ -100,17 +98,17 @@ async function getAllInventory(req, res){
         if(req.user.role === "Admin"){
 
             inventoryLogs = await Inventory.find()
-            .populate("createdBy", "firstName lastName email role")
+            .populate("user", "firstName lastName email role")
             .populate({
                 path: "product", 
-                select: "productName productStock category productPrice createdBy",
+                select: "productName productStock category productPrice user",
                 populate: [
                     {
                         path: "category",
                         select: "categoryName"
                     },
                     {
-                        path: "createdBy",
+                        path: "user",
                         select: "firstName lastName email role"
                     }
                 ]
@@ -144,7 +142,7 @@ async function getProductInventory(req, res){
     try{
         const adminId = req.params._id;
 
-        const inventoryLogs = await Inventory.find({ createdBy: adminId }).populate("product").sort({ editedAt: -1 });
+        const inventoryLogs = await Inventory.find({ user: adminId }).populate("product").sort({ editedAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -198,7 +196,7 @@ async function editInventory(req, res){
             });
         };
 
-        if(req.user.role !== "Admin" && req.user._id.toString() !== oldInventory.createdBy.toString()){
+        if(req.user.role !== "Admin" && req.user._id.toString() !== oldInventory.user.toString()){
             return res.status(403).json({
                 success: false,
                 message: "You can not edit another admin's inventory!"
