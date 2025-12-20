@@ -1,6 +1,7 @@
 import z from "zod";
 import { User } from "../models/User.js";
-import { Contact } from "../models/Contact.js";
+import { ContactForm } from "../models/ContactForm.js";
+
 
 const contactValidator = z.object({
     firstName: z.string().min(1, "First name is required!"),
@@ -10,7 +11,7 @@ const contactValidator = z.object({
     message: z.string().min(1, "Message is required!")
 });
 
-async function createMessage(req, res){
+async function createMessageForm(req, res){
 
     try{
         const parsedResult = contactValidator.safeParse(req.body);
@@ -48,7 +49,7 @@ async function createMessage(req, res){
             });
         };
 
-        const contactMessage = await Contact.create({
+        const contactMessage = await ContactForm.create({
             firstName,
             lastName,
             email,
@@ -71,7 +72,7 @@ async function createMessage(req, res){
     };
 };
 
-async function getAllMessages(req, res){
+async function getAllFormMessages(req, res){
 
     try{
 
@@ -82,7 +83,7 @@ async function getAllMessages(req, res){
             });
         }
 
-        const messages = await Contact.find({})
+        const messages = await ContactForm.find({})
         .populate("user", "firstName lastName email contactNumber").sort({
             createdAt: -1
         });
@@ -101,7 +102,7 @@ async function getAllMessages(req, res){
     };
 };
 
-async function updateMessageStatus(req, res){
+async function updateFormMessageStatus(req, res){
 
     try{
 
@@ -130,7 +131,7 @@ async function updateMessageStatus(req, res){
             })
         }
 
-        const updatedMessageStatus = await Contact.findByIdAndUpdate(
+        const updatedMessageStatus = await ContactForm.findByIdAndUpdate(
             messageId,
             {
                 status
@@ -163,7 +164,7 @@ async function updateMessageStatus(req, res){
 }
 
 export {
-    createMessage,
-    getAllMessages,
-    updateMessageStatus
+    createMessageForm,
+    getAllFormMessages,
+    updateFormMessageStatus
 }
