@@ -104,7 +104,7 @@ async function getAllAddress(req, res){
         let addresses;
 
         if(role === "Admin"){
-            addresses = (await Address.find({})).sort({ createdAt: -1, isDefault: -1 });
+            addresses = await Address.find({}).sort({ createdAt: -1, isDefault: -1 });
         }
         
         else if(role === "Customer"){
@@ -164,32 +164,6 @@ async function getSingleAddress(req, res){
         })
     }
 };
-
-async function getUserAddress(req, res){
-
-    try{
-        if(req.user.role !== "Admin"){
-            return res.status(403).json({
-                success: false,
-                message: "Only admin can view customer address!"
-            });
-        };
-
-        const addresses = await Address.find({ user: req.params.userId }).sort({ isDefault: -1, createdAt: -1 });
-
-        return res.status(200).json({
-            success: true,
-            message: "Data fetched successfully!",
-            addresses
-        })
-    } catch(error){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error!",
-            error: error.message
-        })
-    }
-}
 
 async function updateAddress(req, res){
 
