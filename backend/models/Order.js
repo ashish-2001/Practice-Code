@@ -78,11 +78,6 @@ const OrderSchema = new mongoose.Schema({
         default: null
     },
 
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    },
-
     shippedAt: {
         type: Date
     },
