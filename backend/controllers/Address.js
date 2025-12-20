@@ -128,7 +128,9 @@ async function getAllAddress(req, res){
 }
 
 async function getSingleAddress(req, res){
+
     try{
+
         if(req.user.role !== "Customer"){
             return res.status(403).json({
                 success: false,
@@ -146,13 +148,14 @@ async function getSingleAddress(req, res){
                 success: false,
                 message: "Address not found!"
             })
-        }
+        };
 
         return res.status(200).json({
             success: true,
             message: "Data fetched successfully!",
             address
         });
+
     } catch(error){
         return res.status(500).json({
             success: false,
@@ -160,7 +163,7 @@ async function getSingleAddress(req, res){
             error: error.message
         })
     }
-}
+};
 
 async function getUserAddress(req, res){
 
