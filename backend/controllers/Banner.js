@@ -76,10 +76,27 @@ async function getAllBanner(req, res){
 
     try{
 
-    } catch(e){
+        const { role } = req.user;
 
-    }
-}
+        let banners;
+
+        if(role === "Admin"){
+            banners = await Banner.find({}).sort({ createdAt: -1, isDefault: -1 });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "All banner fetched successfully!",
+            data: banners
+        })
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: e.message
+        });
+    };
+};
 
 async function updateBanner(){
 
@@ -100,5 +117,8 @@ async function deleteBanner(){
 }
 
 export {
-    createBanner
+    createBanner,
+    getAllBanner,
+    updateBanner,
+    deleteBanner
 }
