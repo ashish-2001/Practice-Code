@@ -36,6 +36,7 @@ const RatingAndReviewSchema = new mongoose.Schema({
         type: Number,
         default: 0
     }
+    
 }, { timestamps: true });
 
 RatingAndReviewSchema.index({ product: 1, approved: 1 });
