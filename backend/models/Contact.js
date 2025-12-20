@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const ContactSchema = new mongoose.Schema({
+const ContactFormSchema = new mongoose.Schema({
 
     firstName: {
         type: String,
@@ -41,7 +41,7 @@ const ContactSchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
-const Contact = mongoose.model("Contact", ContactSchema);
+const Contact = mongoose.model("Contact", ContactFormSchema);
 
 export {
     Contact
