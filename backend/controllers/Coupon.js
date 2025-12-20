@@ -108,7 +108,7 @@ async function editCoupon(req, res){
         if(req.user.role === "Customer"){
             return res.status(400).json({
                 success: false,
-                message: "Customer cannot create coupon!"
+                message: "Customer cannot edit coupon!"
             });
         };
 
