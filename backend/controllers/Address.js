@@ -98,12 +98,6 @@ async function createAddress(req, res){
 async function getAllAddress(req, res){
 
     try{
-        if(req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "Only customers can view their address!"
-            });
-        }
 
         const userId = req.user._id;
 
