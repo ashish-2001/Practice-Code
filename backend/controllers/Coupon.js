@@ -340,25 +340,6 @@ async function applyCoupon(req, res){
             })
         }
 
-        let usage = await CouponUsage.findOne({
-            user: userId,
-            coupon: coupon._id
-        });
-
-        if(!usage){
-            usage = await CouponUsage.create({
-                user: userId,
-                coupon: coupon._id,
-                usedCount: 0
-            });
-        }
-
-        if(usage.usedCount >= perUserLimit){
-            return res.status(400).json({
-                message: "You already have used it maximum times!"
-            })
-        }
-
         let discount = coupon.discountType === "Fixed"
                         ? coupon.discountType
                         : (orderAmount * coupon.discountValue) / 100;
@@ -374,8 +355,7 @@ async function applyCoupon(req, res){
             message: "Coupon applied!",
             couponCode: coupon.code,
             discount,
-            finalAmount,
-            remainingUses: coupon.perUserLimit - coupon.usedCount
+            finalAmount
         });
     } catch(e){
         return res.status(500).json({
