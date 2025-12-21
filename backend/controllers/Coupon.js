@@ -1,5 +1,4 @@
 import z from "zod";
-import { User } from "../models/User";
 import { Coupon } from "../models/Coupon";
 import { Product } from "../models/Product";
 import { Category } from "../models/Category";
