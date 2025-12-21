@@ -1,10 +1,10 @@
-import z from "zod";
+import z, { success } from "zod";
 import { Banner } from "../models/Banner";
 
 const bannerValidator = z.object({
     title: z.string().min(3, "Title is too small"),
-    image: z.string(),
-    link: z.string().url(),
+    image: z.string().min(1, "Image is required!"),
+    link: z.string().url("Invalid Url"),
     startDate: z.string().datetime(),
     endDate: z.string().datetime(),
     priority: z.number().int().min(1),
@@ -17,31 +17,22 @@ async function createBanner(req, res){
         const parsedResult = bannerValidator.safeParse(req.body);
 
         if(!parsedResult.success){
-            return resizeBy.status(402).json({
+            return res.status(400).json({
                 success: false,
-                message: "All the fields are required!"
+                message: parsedResult.error.errors[0].message
             });
         };
 
         const { title, image, link, startDate, endDate, priority, active } = parsedResult.data;
 
-        if(req.user.role === "Admin"){
+        if(req.user.role !== "Admin"){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can create banner!"
             });
         };
 
-        const userId = req.user._id;
-
-        if(!userId){
-            return res.status(404).json({
-                success: false,
-                message: "User not found!"
-            });
-        };
-
-        const bannerData = await Banner.create({
+        const banner = await Banner.create({
             title: title,
             image: image,
             link: link,
@@ -51,7 +42,7 @@ async function createBanner(req, res){
             active: active
         });
 
-        if(!bannerData){
+        if(!banner){
             return res.status(302).json({
                 success: false,
                 message: "Banner could not be created!"
@@ -61,7 +52,7 @@ async function createBanner(req, res){
         return res.status(200).json({
             success: true,
             message: "Banner created successfully!",
-            data: bannerData
+            data: banner
         });
     } catch(e){
         return res.status(500).json({
@@ -76,13 +67,15 @@ async function getAllBanner(req, res){
 
     try{
 
-        const { role } = req.user;
+        if(req.user.role !== "Admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized access"
+            })
+        };
 
-        let banners;
-
-        if(role === "Admin"){
-            banners = await Banner.find({}).sort({ createdAt: -1, isDefault: -1 });
-        }
+        const banners = await Banner.find({})
+        .sort({ priority: 1, createdAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -98,10 +91,15 @@ async function getAllBanner(req, res){
     };
 };
 
-async function updateBanner(){
+async function updateBanner(req, res){
 
     try{
 
+        const { role, _id: userId } = req.user;
+
+        if(role === "Admin"){
+            
+        }
     } catch(e){
 
     }
