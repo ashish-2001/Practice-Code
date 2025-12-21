@@ -5,27 +5,33 @@ import { Product } from "../models/Product";
 import { Category } from "../models/Category";
 
 const couponValidator = z.object({
-    code: z.string().min(5).max(10).transform(val => val.toUpperCase()).refine(val => /^[A-Z0-9]+$/.test(val), {
-        message: "Coupon can contain only A-Z and 0-9"
-    }),
-    product: z.string().min(1, "Product is required!"),
-    category: z.string().min(1, "Category is required!"),
-    discountType: z.string().enum(["Flat", "Percentage"]),
-    discountValue: z.number().min(1),
-    minOrderAmount: z.number().min(0).optional(),
-    maxDiscount: z.number().optional(),
-    expiry: z.string(),
-    active: z.boolean()
+    code: z
+            .string()
+            .min(5)
+            .max(10)
+            .transform(val => val.toUpperCase())
+            .regex(/^[A-Z0-9]+$/, "Coupon can contain only A-Z and 0-9"),
+    description: z.string().optional(),
+    discountType: z.enum(["Fixed", "Percentage"]),
+    discountValue: z.number().positive(),
+    minPurchase: z.number().min(0).optional(),
+    usageLimit: z.number().nullable().optional(),
+    perUserLimit: z.number().optional(),
+    validFrom: z.coerce.date().optional(),
+    validUntil: z.coerce.date().nullable().optional(),
+    active: z.boolean(),
+    appliesTo: z.enum(["all", "products", "categories"]),
+    appliesIds: z.array(z.string()).optional()
 });
 
 async function createCoupon(req, res){
 
     try{
 
-        if(req.user.role === "Customer"){
+        if(req.user.role !== "Admin"){
             return res.status(400).json({
                 success: false,
-                message: "Customer cannot create coupon!"
+                message: "Only admin can create coupon!"
             });
         };
 
@@ -34,59 +40,59 @@ async function createCoupon(req, res){
         if(!parsedResult.success){
             return res.status(400).json({
                 success: false,
-                message: "All fields are required!"
+                message: parsedResult.error.errors[0].message
             });
         };
 
-        const {
-            product,
-            category,
-            code
-        } = parsedResult.data;
+        const { data } = parsedResult.data;
 
-        const productData = await Product.findById(product);
-
-        if(!productData){
-            return res.status(404).json({
-                success: false,
-                message: "Product not found!"
-            });
-        }
-
-        const categoryData = await Category.findById(category);
-
-        if(!categoryData){
-            return res.status(404).json({
-                success: false,
-                message: "Category not found!"
-            });
-        };
-
-        if(String(productData.category) !== String(category)){
-            return res.status(400).json({
-                success: false,
-                message: "This product does not belong to the selected category!"
-            })
-        }
-
-        const already = await Coupon.findOne({
-            code,
-            product
+        const existing = await Product.findOne({
+            code: data.code
         });
 
-        if(already){
-            return res.status(400).json({
+        if(existing){
+            return res.status(409).json({
                 success: false,
-                message: "Coupon already exists for this product!"
+                message: "Coupon code already exist!"
             });
-        };
+        }
+
+        let appliesToModel = null;
+
+        if(data.appliesTo === "products"){
+            appliesToModel = "Product"
+
+            const count = await Product.countDocuments({ _id: { $in: data.appliesIds }})
+
+            if(count !== data.appliesIds.length){
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid product id"
+                })
+            }
+        }
+
+        if(data.appliesTo === "categories"){
+            appliesToModel = "Category";
+            const count = await Category.countDocuments({ _id: {
+                $in: data.appliesIds
+            }})
+
+            if(count !== data.appliesTo.length){
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid category Id"
+                })
+            }
+        }
 
         const coupon = await Coupon.create({
-            ...parsedResult.data,
+            ...data,
+            appliesToModel,
             createdBy: req.user._id
-        });
+        })
 
-        return res.status(200).json({
+        return res.status(201).json({
             success: true,
             message: "Coupon created successfully!",
             coupon
@@ -105,10 +111,10 @@ async function updateCoupon(req, res){
     try{
         const couponId = req.params.id;
 
-        if(req.user.role === "Customer"){
+        if(req.user.role !== "Admin"){
             return res.status(400).json({
                 success: false,
-                message: "Customer cannot update coupon!"
+                message: "only admin can update coupon!"
             });
         };
 
@@ -126,56 +132,11 @@ async function updateCoupon(req, res){
         if(!parsedResult.success){
             return res.status(400).json({
                 success: false,
-                message: "All fields are required!"
+                message: parsedResult.error.errors[0].message
             });
         };
 
-        const updates = parsedResult.data;
-
-        if(updates.code){
-            updates.code = updates.code.toUpperCase();
-
-            const exists = await Coupon.findOne({
-                code: updates.code,
-                _id: {
-                    $ne: couponId
-                }
-            })
-
-            if(exists){
-                return res.status(409).json({
-                    success: false,
-                    message: "This coupon code already exists!"
-                });
-            };
-        }
-
-        if(updates.product || updates.category){
-            const productId = updates.product || coupon.product;
-            const categoryId = updates.category || coupon.category;
-
-            const productData = await Product.findById(productId);
-            const categoryData = await Category.findById(categoryId);
-
-            if(!productData || !categoryData){
-                return res.status(404).json({
-                    success: false,
-                    message: "Invalid product or category!"
-                });
-            };
-
-            if(String(productData.category) !== String(categoryId)){
-                return res.status(400).json({
-                    success: false,
-                    message: "The product does not belong to this category!"
-                });
-            };
-
-            updates.product = productId;
-            updates.category = categoryId;
-        };
-
-        Object.assign(coupon, updates);
+        Object.assign(coupon, parsedResult.data);
 
         await coupon.save();
 
@@ -198,14 +159,14 @@ async function deleteCoupon(req, res){
     try{
         const couponId = req.params.id;
 
-        if(req.user.role === "Customer"){
+        if(req.user.role !== "Admin"){
             return res.status(400).json({
                 success: false,
-                message: "Customer cannot delete coupon!"
+                message: "Only admin can delete coupon!"
             });
         }
 
-        const coupon = await  Coupon.findById(couponId);
+        const coupon = await Coupon.findById(couponId);
 
         if(!coupon){
             return res.status(404).json({
@@ -214,7 +175,7 @@ async function deleteCoupon(req, res){
             });
         }
 
-        await Coupon.deleteOne({ _id: couponId });
+        await Coupon.deleteOne();
 
         return res.status(200).json({
             success: true,
