@@ -327,68 +327,85 @@ async function applyCoupon(req, res){
 
     try{
         const { code, productId, orderAmount } = req.body;
+        const userId = req.user._id;
+        const now = new Date();
 
-        const coupon = await Coupon.findOne({ code });
+        const coupon = await Coupon.findOne({
+            code: code.toUpperCase(),
+            active: true,
+            validFrom: {
+                $lte: now
+            },
+            $or: [
+                {
+                    validUntil: null
+                },
+                {
+                    validUntil: {
+                        $gte: now
+                    }
+                }
+            ]
+        });
 
         if(!coupon){
             return res.status(404).json({
                 success: false,
-                message: "Coupon not found!"
+                message: "Invalid or expired coupon!"
             });
         };
 
-        if(new Date(coupon.expiry) < new Date()){
-            return res.status(400).json({
-                success: false,
-                message: "Coupon has expired!"
-            });
-        };
+        if(coupon.appliesTo === "products"){
+            const allowedProducts = coupon.appliesIds.map(id => id.toString())
 
-        if(!coupon.active){
-            return res.status(400).json({
-                success: false,
-                message: "Coupon is not active!"
-            });
-        };
+            if(!allowedProducts.includes(productId)){
+                return res.status(400).json({
+                    success: false,
+                    message: "Coupon is not applicable to this product"
+                })
+            }
+        }
 
-        if(String(coupon.product) !== String(productId)){
+        if(orderAmount < coupon.minPurchase){
             return res.status(400).json({
                 success: false,
-                message: "Coupon is not valid for this product!"
-            });
-        };
+                message: `Minimum order amount must ${coupon.minPurchase}`
+            })
+        }
 
-        if(orderAmount < coupon.minOrderAmount){
+        if(coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit){
             return res.status(400).json({
                 success: false,
-                message: `Minimum order amount must be ₹${coupon.minOrderAmount}`
-            });
-        };
+                message: "Coupon usage limit exceeded"
+            })
+        }
 
         let discount = 0;
 
-        if(coupon.discountType === "Flat"){
+        if(coupon.discountType === "Fixed"){
             discount = coupon.discountValue;
-        } else{
+        } else if(coupon.discountType === "Percent"){
             discount = (orderAmount * coupon.discountValue) / 100;
         };
 
-        if(coupon.maxDiscount && discount > coupon.maxDiscount){
-            discount = coupon.maxDiscount;
-        };
+        if(discount > orderAmount){
+            discount = orderAmount
+        }
 
         const finalAmount = orderAmount - discount;
 
         return res.status(200).json({
             success: true,
             message: "Coupon applied!",
+            couponCode: coupon.code,
+            discount,
             finalAmount
         });
-    } catch(error){
+    } catch(e){
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
-            error: error.message
+            error: e.message
         });
     };
 };
@@ -398,5 +415,6 @@ export {
     updateCoupon,
     deleteCoupon,
     getAllCoupons,
+    getSingleCoupon,
     applyCoupon
 }
