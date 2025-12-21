@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { User } from "../models/User";
 import { Coupon } from "../models/Coupon";
 import { Product } from "../models/Product";
@@ -193,13 +193,9 @@ async function deleteCoupon(req, res){
 async function getAllCoupons(req, res){
 
     try{
-        let coupons;
-
-        if(req.user.role === "Admin"){
-            coupons = await Coupon.find().populate("product").populate("category").populate("createdBy");
-        } else {
-            coupons = await Coupon.find({ active: true }).populate("product");
-        }
+        const coupons = req.user.role === "Admin" 
+            ? await Coupon.find().populate("createdBy") 
+            : await Coupon.find({ active: true })
 
         return res.status(200).json({
             success: true,
@@ -287,7 +283,7 @@ async function getSingleCoupon(req, res){
 async function applyCoupon(req, res){
 
     try{
-        const { code, productId, orderAmount } = req.body;
+        const { code, categoryId, productId, orderAmount } = req.body;
         const now = new Date();
 
         const coupon = await Coupon.findOne({
@@ -315,15 +311,18 @@ async function applyCoupon(req, res){
             });
         };
 
-        if(coupon.appliesTo === "products"){
-            const allowedProducts = coupon.appliesIds.map(id => id.toString())
+        if(coupon.appliesTo === "products" && !coupon.appliesIds.map(id => id.toString()).includes(productId)){
+            return res.status(400).json({
+                success: false,
+                message: "Coupon not valid for this product"
+            })
+        }
 
-            if(!allowedProducts.includes(productId)){
-                return res.status(400).json({
-                    success: false,
-                    message: "Coupon is not applicable to this product"
-                })
-            }
+        if(coupon.appliesTo === "categories" && !coupon.appliesIds.map(id => id.toString()).includes(categoryId)){
+            return res.status(400).json({
+                success: false,
+                message: "Coupon not valid for this category"
+            })
         }
 
         if(orderAmount < coupon.minPurchase){
@@ -340,19 +339,15 @@ async function applyCoupon(req, res){
             })
         }
 
-        let discount = 0;
+        let discount = coupon.discountType === "Fixed"
+                        ? coupon.discountType
+                        : (orderAmount * coupon.discountValue) / 100;
 
-        if(coupon.discountType === "Fixed"){
-            discount = coupon.discountValue;
-        } else if(coupon.discountType === "Percent"){
-            discount = (orderAmount * coupon.discountValue) / 100;
-        };
+        discount = Math.min(discount, orderAmount);
+        const finalAmount = orderAmount - discount
 
-        if(discount > orderAmount){
-            discount = orderAmount
-        }
-
-        const finalAmount = orderAmount - discount;
+        coupon.usedCount += 1;
+        await coupon.save();
 
         return res.status(200).json({
             success: true,
