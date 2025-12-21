@@ -327,7 +327,6 @@ async function applyCoupon(req, res){
 
     try{
         const { code, productId, orderAmount } = req.body;
-        const userId = req.user._id;
         const now = new Date();
 
         const coupon = await Coupon.findOne({
