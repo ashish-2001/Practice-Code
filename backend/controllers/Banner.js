@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Banner } from "../models/Banner";
 
 const bannerValidator = z.object({
