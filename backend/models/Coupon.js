@@ -66,9 +66,19 @@ const CouponSchema = new mongoose.Schema({
         default: 'all'
     },
 
-    appliesIds: {
-        type: mongoose.Schema.Types.ObjectId
+    appliesIds: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: "appliesToModel"
+        }
+    ],
+
+    appliesToModel: {
+        type: String,
+        enum: ["Product", "Category"],
+        default: null
     }
+    
 }, { timestamps: true });
 
 CouponSchema.index({ code: 1 });

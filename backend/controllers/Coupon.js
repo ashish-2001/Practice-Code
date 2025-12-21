@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { User } from "../models/User";
 import { Coupon } from "../models/Coupon";
 import { Product } from "../models/Product";
@@ -100,7 +100,7 @@ async function createCoupon(req, res){
     }
 }
 
-async function editCoupon(req, res){
+async function updateCoupon(req, res){
 
     try{
         const couponId = req.params.id;
@@ -108,7 +108,7 @@ async function editCoupon(req, res){
         if(req.user.role === "Customer"){
             return res.status(400).json({
                 success: false,
-                message: "Customer cannot edit coupon!"
+                message: "Customer cannot update coupon!"
             });
         };
 
@@ -252,6 +252,75 @@ async function getAllCoupons(req, res){
             error: error.message
         })
     }
+};
+
+async function getSingleCoupon(req, res){
+
+    try{
+
+        if(req.user.role ==="Admin"){
+            return res.status(400).json({
+                success: false,
+                message: "Only customer can access!"
+            })
+        }
+
+        const { couponId } = req.params;
+        const now = Date();
+
+        const coupon = await Coupon.findOne({
+            _id: couponId,
+            active: true,
+            validFrom: {
+                $lte: now
+            },
+            $or: [
+                {
+                    validUntil: null
+                },
+                {
+                    validUntil: {
+                        $gte: now
+                    }
+                }
+            ]
+        });
+
+        if(!coupon){
+            return res.status(404).json({
+                success: false,
+                message: "Coupon not found!"
+            })
+        }
+
+        if(coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit){
+            return res.status(400).json({
+                success: false,
+                message: "Coupon usage limit exceeded"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Coupon fetched successfully",
+            data: {
+                _id: coupon._id,
+                coupon: coupon.code,
+                description: coupon.description,
+                discountType: coupon.discountType,
+                discountValue: coupon.discountValue,
+                minPurchase: coupon.minPurchase,
+                validFrom: coupon.validFrom,
+                validUntil: coupon.validUntil
+            }
+        })
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
+    }
 }
 
 async function applyCoupon(req, res){
@@ -326,7 +395,7 @@ async function applyCoupon(req, res){
 
 export {
     createCoupon,
-    editCoupon,
+    updateCoupon,
     deleteCoupon,
     getAllCoupons,
     applyCoupon
