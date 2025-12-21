@@ -60,6 +60,11 @@ const CouponSchema = new mongoose.Schema({
         default: true
     },
 
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    },
+
     appliesTo: {
         type: String,
         enum: ['all', 'categories', 'products'],
@@ -78,7 +83,7 @@ const CouponSchema = new mongoose.Schema({
         enum: ["Product", "Category"],
         default: null
     }
-    
+
 }, { timestamps: true });
 
 CouponSchema.index({ code: 1 });
