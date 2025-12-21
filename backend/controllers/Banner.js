@@ -32,6 +32,8 @@ async function createBanner(req, res){
             });
         };
 
+        const userId = req.user._id;
+
         const banner = await Banner.create({
             title: title,
             image: image,
@@ -39,7 +41,8 @@ async function createBanner(req, res){
             startDate: startDate,
             endDate: endDate,
             priority: priority,
-            active: active
+            active: active,
+            createdBy: userId
         });
 
         if(!banner){
@@ -49,7 +52,7 @@ async function createBanner(req, res){
             });
         };
 
-        return res.status(200).json({
+        return res.status(201).json({
             success: true,
             message: "Banner created successfully!",
             data: banner
@@ -74,7 +77,10 @@ async function getAllBanner(req, res){
             })
         };
 
-        const banners = await Banner.find({})
+        const banners = await Banner.find({ isDeleted: false })
+        .populate("createdBy", "name email")
+        .populate("updatedBy", "name email")
+        .populate("deletedBy", "name email")
         .sort({ priority: 1, createdAt: -1 });
 
         return res.status(200).json({
@@ -91,32 +97,159 @@ async function getAllBanner(req, res){
     };
 };
 
+const bannerUpdatedValidator = bannerValidator.partial();
+
 async function updateBanner(req, res){
 
     try{
 
-        const { role, _id: userId } = req.user;
+        if(req.user.role === "Admin"){
+            return res.status(400).json({
+                success: false,
+                message: "Only Admin can update banner!"
+            });
+        };
 
-        if(role === "Admin"){
-            
+        const { bannerId } = req.params;
+        const userId = req.user._id;
+
+        const parsedResult = bannerUpdatedValidator.safeParse();
+
+        if(!parsedResult.success){
+            return res.status(400).json({
+                success: false,
+                message: parsedResult.error.errors[0].message
+            })
+        };
+
+        const updatedBanner = await Banner.findOneAndUpdate(
+            {
+                _id: bannerId,
+                isDeleted: false
+            },
+            {
+                ...parsedResult.data,
+                updatedBy: userId
+            },
+            {
+                new: true
+            }
+        );
+
+        if(!updatedBanner){
+            return res.status(400).json({
+                success: false,
+                message: "Banner not updated!"
+            })
         }
-    } catch(e){
 
+        return res.status(200).json({
+            success: false,
+            message: "Banner updated successfully!",
+            data: updatedBanner
+        })
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
     }
 };
 
-async function deleteBanner(){
+async function getSingleBanner(req, res){
+
+    try{
+        const now = new Date();
+        const { bannerId } = req.params;
+
+        const banner = await Banner.findOne({
+            _id: bannerId,
+            active: true,
+            isDeleted: false,
+            startDate: {
+                $lte: now
+            },
+            endDate: {
+                $gte: now
+            }
+        })
+        .toConstructor({ priority: 1, createdAt: -1 })
+        .select("title image link startDate endDate");
+
+        if(!banner){
+            return res.status(200).json({
+                success: true,
+                data: null
+            })
+        };
+
+        return res.status(200).json({
+            success: true,
+            data: banner
+        })
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error!",
+            error: e.message
+        })
+    }
+}
+
+async function deleteBanner(req, res){
 
     try{
 
-    } catch(e){
+        if(req.user.role !== "Admin"){
+            return res.status(400).json({
+                success: false,
+                message: "Only admin can delete banner!"
+            });
+        };
 
+        const { bannerId } = req.params;
+        const userId = req.user._id;
+
+        const deletedBanner = await Banner.findOneAndDelete(
+            {
+                _id: bannerId,
+                isDeleted: false
+            },
+            {
+                isDeleted: true,
+                deletedBy: userId
+            },
+            {
+                new: true
+            }
+        );
+
+        if(!deletedBanner){
+            return res.status(404).json({
+                success: false,
+                message: "Banner not found!"
+            });
+        };
+
+        return res.status(200).json({
+            success: false,
+            message: "Banner deleted successfully!"
+        })
+
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
     }
 }
 
 export {
     createBanner,
     getAllBanner,
+    getSingleBanner,
     updateBanner,
     deleteBanner
 }
