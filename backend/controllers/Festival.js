@@ -152,6 +152,45 @@ async function getAllFestival(req, res){
 
     try{
 
+        if(!req.user || req.user.role !== "Admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admin can get the festival"
+            });
+        };
+
+        const {
+            page = 1,
+            limit = 10,
+            active,
+            sortBy = "createdAt",
+            order = desc
+        } = req.query;
+
+        const filter = {}
+        if(active !== undefined){
+            filter.active = active === "true" 
+        }
+
+        const festivals = await Festival.find(filter)
+        .populate("createdBy", "name email")
+        .sort({ [sortBy]: order === "asc" ? 1 : -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit));
+
+        const totalFestivals = await Festival.countDocuments(filter);
+
+        return res.status(200).json({
+            success: false,
+            message: "Festivals fetched successfully",
+            meta: {
+                total: totalFestivals,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(totalFestivals / limit)
+            },
+            data: festivals
+        })
     } catch(e){
         return res.status(500).json({
             success: false,
@@ -164,7 +203,39 @@ async function getAllFestival(req, res){
 async function getSingleFestival(req, res){
 
     try{
+        if(!req.user || req.user.role !== "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Only Customer can get the festival"
+            })
+        }
 
+        const { festivalId } = req.params;
+
+        if(!mongoose.Types.ObjectId.isValid(festivalId)){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid festival id"
+            })
+        }
+
+        const festival = await Festival.findOne({
+            _id: festivalId,
+            active: true
+        }).populate("productIds").select("-createdBy -creatorRole");
+
+        if(!festival){
+            return res.status(404).json({
+                success: false,
+                message: "Festival not found or inactive"
+            })
+        }
+
+        return res.status(200).json({
+            success: false,
+            message: "Festival fetched successfully",
+            data: festival
+        })
     } catch(e){
         return  res.status(500).json({
             success: false,
@@ -177,6 +248,35 @@ async function getSingleFestival(req, res){
 async function deleteFestival(req, res){
     try{
 
+        if(!req.user || req.user.role !== "Admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admin can delete the festival"
+            });
+        };
+
+        const { festivalId } = req.params;
+
+        if(!mongoose.Types.ObjectId.isValid(festivalId)){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid festival id"
+            })
+        };
+
+        const deletedFestival = await Festival.findByIdAndDelete(festivalId);
+
+        if(!deletedFestival){
+            return res.status(404).json({
+                success: false,
+                message: "Festival not found!"
+            })
+        };
+
+        return res.status(200).json({
+            success: false,
+            message: "Festival deleted successfully"
+        })
     } catch(e){
         return res.status(500).json({
             success: false,
