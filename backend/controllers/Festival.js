@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import z, { success } from "zod";
+import z from "zod";
 import { Festival } from "../models/Festival";
 
 const createFestivalValidator = z.object({
@@ -164,7 +164,7 @@ async function getAllFestival(req, res){
             limit = 10,
             active,
             sortBy = "createdAt",
-            order = desc
+            order = "desc"
         } = req.query;
 
         const filter = {}
@@ -200,6 +200,42 @@ async function getAllFestival(req, res){
     };
 };
 
+async function getAllActiveFestival(req, res){
+    try{
+        
+        if(!req.user){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized!"
+            })
+        }
+        const now = new Date();
+
+            const festivals = await Festival.find({
+                active: true,
+                startDate: { $lte: now },
+                $or: [
+                    {
+                        endDate: { $gte: now }
+                    },
+                    { autoHideAfterEnd: false }
+                ]
+            }).populate("productIds");
+
+            return res.status(200).json({
+                success: false,
+                message: "Active festivals fetched successfully",
+                data: festivals
+            })
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
+    }
+}
+
 async function getSingleFestival(req, res){
 
     try{
@@ -219,9 +255,22 @@ async function getSingleFestival(req, res){
             })
         }
 
+        const now = new Date();
+
         const festival = await Festival.findOne({
             _id: festivalId,
-            active: true
+            active: true,
+            startDate: {
+                $lte: now
+            },
+            $or: [
+                {
+                    endDate: { $gte: now }
+                },
+                { 
+                    autoHideAfterEnd: false
+                }
+            ]
         }).populate("productIds").select("-createdBy -creatorRole");
 
         if(!festival){
@@ -232,7 +281,7 @@ async function getSingleFestival(req, res){
         }
 
         return res.status(200).json({
-            success: false,
+            success: true,
             message: "Festival fetched successfully",
             data: festival
         })
@@ -290,6 +339,7 @@ export {
     createFestival,
     updateFestival,
     getAllFestival,
+    getAllActiveFestival,
     getSingleFestival,
     deleteFestival
 }
