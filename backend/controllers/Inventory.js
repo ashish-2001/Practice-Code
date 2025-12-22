@@ -1,7 +1,6 @@
 import z from "zod";
 import { Product } from "../models/Product";
 import { Inventory } from "../models/Inventory";
-import { User } from "../models/User";
 import mongoose from "mongoose";
 
 const inventoryValidator = z.object({
@@ -11,6 +10,13 @@ const inventoryValidator = z.object({
 })
 
 async function createInventory(req, res){
+
+    if(!req.user || req.user.role !== "Admin"){
+        return res.status(403).json({
+            success: false,
+            message: "Only admin can create inventory"
+        })
+    }
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -32,9 +38,9 @@ async function createInventory(req, res){
             change
         } = parsedResult.data;
 
-        const productData = await Product.findById(productId).session(session);
+        const product = await Product.findById(productId).session(session);
 
-        if(!productData){
+        if(!product){
             return res.status(404).json({
                 success: false,
                 message: "Product not found!"
@@ -42,41 +48,39 @@ async function createInventory(req, res){
         };
 
         if(reason === "Purchase"){
-            productData.productStock -= change;
+            product.productStock -= change;
+        } else{
+            product.productStock += change;
         }
 
-        if(reason === "Order cancelled"){
-            productData.productStock += change;
-        }
-
-        if(reason === "Stock update"){
-            productData.productStock += change;
-        }
-
-        if(productData.productStock < 0){
+        if(product.productStock < 0){
             await session.abortTransaction();
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
-                message: "Stock cannot be negative!"
+                message: "Stock can not be negative"
             });
         };
 
-        await productData.save({ session });
+        await product.save({ session });
 
-        const inventory = await Inventory.create([{
-            product: productId,
-            reason,
-            change
-        }], { session });
+        const inventory = await Inventory.create([
+            {
+                product: productId,
+                user: req.user._id,
+                reason,
+                change
+            }
+        ], { session });
 
         await session.commitTransaction();
 
-        return res.status(200).json({
+        return res.status(201).json({
             success: true,
-            message: "Inventory created successfully!",
+            message: "Inventory created successfully",
             inventory: inventory[0],
-            product: productData
+            product
         });
+
     }catch(error){
 
         await session.abortTransaction();
@@ -92,35 +96,27 @@ async function createInventory(req, res){
 
 async function getAllInventory(req, res){
 
+    if(!req.user || req.user._id !== "Admin"){
+        return res.status(403).json({
+            success: false,
+            message: "Only admin can view inventory logs"
+        })
+    }
+
     try{
-
-        let inventoryLogs;
-        if(req.user.role === "Admin"){
-
-            inventoryLogs = await Inventory.find()
-            .populate("user", "firstName lastName email role")
+            const inventoryLogs = await Inventory.find()
             .populate({
                 path: "product", 
-                select: "productName productStock category productPrice user",
-                populate: [
+                select: "_id productName productStock productPrice category",
+                populate: 
                     {
                         path: "category",
                         select: "categoryName"
-                    },
-                    {
-                        path: "user",
-                        select: "firstName lastName email role"
-                    }
-                ]
-            });
-        }
-
-        else{
-            return res.status(403).json({
-                success: false,
-                message: "YOu are not allowed to access inventory logs!"
-            });
-        }
+                    } 
+            }).populate({
+                path: "user",
+                select: "_id name email role"
+            }).sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -140,13 +136,44 @@ async function getAllInventory(req, res){
 async function getProductInventory(req, res){
 
     try{
-        const adminId = req.params._id;
+        
+        if(!req.user || req.user._id !== "Admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admin can access product inventory"
+            })
+        };
 
-        const inventoryLogs = await Inventory.find({ user: adminId }).populate("product").sort({ editedAt: -1 });
+        const { productId } = req.params;
+
+        if(!mongoose.Types.ObjectId.isValid(productId)){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid product id"
+            });
+        };
+
+        const inventoryLogs = await Inventory.find({ product: productId })
+            .populate({
+                path: "product",
+                select: "_id productName productPrice productStock"
+            })
+            .populate({
+                path: "user",
+                select: "_id name email role"
+            }).sort({ createdAt: -1 });
+
+            if(!inventoryLogs || inventoryLogs.length === 0){
+                return res.status(404).json({
+                    success: false,
+                    message: "No inventory found for this product"
+                })
+            };
 
         return res.status(200).json({
             success: true,
             message: "Admin data fetched successfully!",
+            product: inventoryLogs[0].products,
             inventoryLogs
         });
     } catch(error){
@@ -156,8 +183,7 @@ async function getProductInventory(req, res){
             error: error.message
         });
     };
-
-}
+};
 
 
 async function editInventory(req, res){
@@ -165,6 +191,13 @@ async function editInventory(req, res){
     session.startTransaction();
 
     try{
+
+        if(!req.user || req.user.role !== "Admin"){
+            return res.status(403).json({
+                success: false,
+                message: "Only admin can edit the inventory"
+            })
+        }
         const inventoryId = req.params.id;
 
         const parsedResult = inventoryValidator.safeParse(req.body);
@@ -190,48 +223,29 @@ async function editInventory(req, res){
         const productData = await Product.findById(oldInventory.product).session(session);
 
         if(!productData){
-            return res.status(403).json({
+            return res.status(404).json({
                 success: false,
                 message: "Product not found!"
             });
         };
 
-        if(req.user.role !== "Admin" && req.user._id.toString() !== oldInventory.user.toString()){
-            return res.status(403).json({
-                success: false,
-                message: "You can not edit another admin's inventory!"
-            });
-        }
-
         if(oldInventory.reason == "Purchase"){
             productData.productStock += oldInventory.change;
-        }
-
-        else if(oldInventory.reason === "Order Cancelled"){
-            productData.productStock -= oldInventory.change
-        }
-
-        else if(oldInventory.reason == "Stock update"){
-            productData.productStock -= productData.change
+        } else{
+            productData.productStock -= oldInventory.change;
         }
 
         if(reason == "Purchase"){
             productData.productStock -= change
-        }
-
-        else if(reason == "Order Cancelled"){
+        } else {
             productData.productStock += change
         }
-
-        else if(reason == "Stock update"){
-            productData.productStock += change
-        };
 
         if(productData.productStock < 0){
             await session.abortTransaction();
-            return res.status(404).json({
+            return res.status(400).json({
                 success: false,
-                message: "Product stock can not be negative!"
+                message: "Product stock cannot be negative!"
             });
         };
 
