@@ -38,7 +38,7 @@ const FestivalSchema = new mongoose.Schema({
 
     creatorRole: {
         type: String,
-        enum: ['Admin', 'Customer'],
+        enum: ['Admin'],
         default: 'Admin'
     },
 
@@ -46,6 +46,7 @@ const FestivalSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     }
+
 }, { timestamps: true });
 
 FestivalSchema.index({ startDate: 1, endDate: 1, active: 1 });
