@@ -8,38 +8,54 @@ const OrderSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        index: true
+        index: true,
+        trim: true
     }, 
 
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
     },
 
-    items: [OrderItemSchema],
+    items:{ 
+        type: [OrderItemSchema],
+        required: true,
+        validate: [v => v.length > 0, "Order must have at least one item"]
+    },
 
-    shippingAddress: Address,
+    shippingAddress: {
+        type: Address,
+        required: true
+    },
 
-    billingAddress: Address,
+    billingAddress: {
+        type: Address,
+        required: true
+    },
 
     subTotal: {
         type: Number,
-        required: true
+        required: true,
+        min: 0
     },
 
     shippingPrice: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0
     },
 
     discount: {
         type: Number,
-        default: 0
+        default: 0,
+        discount: 0
     },
 
     totalAmount: {
         type: Number,
-        required: true
+        required: true,
+        min: 0
     },
 
     paymentMethod: {
@@ -61,15 +77,18 @@ const OrderSchema = new mongoose.Schema({
     },
 
     trackingNumber: {
-        type: String
+        type: String,
+        trim: true
     },
 
     courier: {
-        type: String
+        type: String,
+        trim: true
     },
 
     notes: {
-        type: String
+        type: String,
+        trim: true
     },
 
     coupon: {
@@ -93,10 +112,20 @@ const OrderSchema = new mongoose.Schema({
     refundedAt: {
         type: Date
     }
+
 }, { timestamps: true });
 
 OrderSchema.index({ orderNumber: 1 });
 OrderSchema.index({ user: 1, orderStatus: 1 });
+
+OrderSchema.pre("save", function(next){
+    if(this.items && this.items.length > 0){
+        const itemsTotal = this.items.reduce((sum, item) => sum + item.total, 0);
+        this.subTotal = itemsTotal;
+        this.totalAmount = itemsTotal + (this.shippingPrice || 0) ( this.discount || 0);
+    }
+    next()
+})
 
 const Order = mongoose.model("Order", OrderSchema);
 
