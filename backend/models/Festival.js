@@ -4,17 +4,21 @@ const FestivalSchema = new mongoose.Schema({
     
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
 
     description: {
-        type: String
+        type: String,
+        trim: true
     },
 
-    productIds: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product'
-    }],
+    productIds: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product'
+        }
+    ],
 
     startDate: {
         type: Date,
@@ -33,7 +37,8 @@ const FestivalSchema = new mongoose.Schema({
 
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
     },
 
     creatorRole: {
@@ -50,6 +55,13 @@ const FestivalSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 FestivalSchema.index({ startDate: 1, endDate: 1, active: 1 });
+
+FestivalSchema.pre("save", function(next){
+    if(this.endDate < this.startDate){
+        return next(new Error("End date must be greater than start date"));
+    }
+    next();
+})
 
 const Festival = mongoose.model("Festival", FestivalSchema);
 
