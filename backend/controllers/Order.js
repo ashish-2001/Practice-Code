@@ -347,7 +347,7 @@ async function updateOrderStatus(req, res){
             success: true,
             message: "Order status updated successfully!",
             order
-        })
+        });
     } catch(error){
         await session.abortTransaction();
         console.error("updated order status:", error)
