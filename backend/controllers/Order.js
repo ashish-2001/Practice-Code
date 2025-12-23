@@ -16,7 +16,6 @@ async function createOrder(req, res){
     session.startTransaction();
 
     try{
-
         const userId = getUserId(req);
 
         if(!userId){
@@ -26,123 +25,80 @@ async function createOrder(req, res){
             });
         };
 
-        const { items, paymentMethod, addressId } = req.body;
+        const { items, shippingAddress, billingAddress, paymentMethod  } = req.body;
 
-        if(!Array.isArray(items || items.length || !addressId)){
-            await session.abortTransaction();
-            return res.status(403).json({
-                success: false,
-                message: "Items and addressId is required!"
-            });
+        if(!Array.isArray(items || items.length === 0)){
+            throw new Error("Order items are required")
         }
 
-        const address = await Address.findById(addressId).session(session);
-
-        if(!address || String(address.user) !== String(userId)){
-            await session.abortTransaction();
-            return res.status(400).json({
-                success: false,
-                message: "Invalid address!"
-            });
-        };
-
-        let totalAmount = 0;
         const orderItems = [];
         let inventoryLogs = [];
 
-        for( const item of items){
-            if(!item.product || !Number.isInteger(item.quantity) || item.quantity <= 0){
-                await session.abortTransaction();
-                return res.status(403).json({
-                    success: false,
-                    message: `Product not found:- ${item.product}`
-                })
-            }
+    for( const item of items){
+        const product = await Product.findById(item.product).session(session)
 
-            const product = await Product.findById(item.product).session(session);
-
-            if(!product){
-                return res.status(403).json({
-                    success: false,
-                    message: `Product not found: ${item.product}`
-                });
-            }
-
-            if(product.productStock < item.quantity){
-                await session.abortTransaction();
-                return res.status(400).json({
-                    success: false,
-                message: `Insufficient stock for ${product.productName}`
-                })
-            }
-
-            product.productStock -= item.quantity;
-
-            if(!product.customerPurchased.map(String).includes(String(userId))){
-                product.customerPurchased.push(userId);
-            }
-
-            await product.save({ session });
-
-            const price = product.productPrice;
-
-            orderItems.push({
-                product: product._id,
-                quantity: item.quantity,
-                price
-            });
-
-            totalAmount += price * item.quantity;
-
-            inventoryLogs.push({
-                createdBy: userId,
-                product: product._id,
-                change: item.quantity,
-                reason: "Purchase"
-            });
-
-            const addressString = `${address.fullName}, ${address.addressLine1}${address.addressLine2 ? "," + address.addressLine1 : ""}, ${address.city}, ${address.state}, ${address.country} - ${address.pinCode}`;
-
-        const createOrder = await Order.create(
-            [{
-                customer: userId,
-                items: orderItems,
-                totalAmount,
-                paymentMethod: paymentMethod || "Cash on delivery",
-                address: addressString,
-                paymentStatus: "Pending",
-                orderStatus: "Processing"
-            }], { session });
-        };
-
-        if(!createOrder){
+        if(!product){
             return res.status(404).json({
                 success: false,
-                message: "Order can not be created!"
-            });
-        };
+                message: "Order not found"
+            })
+        }
+
+        if(product.productStock < item.quantity){
+            return res.status(400).json({
+                success: false,
+                message: `Insufficient stock for ${product.productName}`
+            })
+        }
+
+        product.productStock -= item.quantity;
+        await product.save({ session });
+
+        orderItems.push({
+            product: product._id,
+            quantity: item.quantity,
+            price: product.productPrice
+        });
+
+        inventoryLogs.push({
+            createdBy: userId,
+            product: product._id,
+            change: -item.quantity,
+            reason: "Order placed"
+        });
+    }
+
+        const order = await Order.create(
+            [{
+                orderNumber: `ORD-${Date.now()}`,
+                user: userId,
+                items: orderItems,
+                shippingAddress,
+                billingAddress,
+                paymentMethod
+            }], { session });
 
         if(inventoryLogs.length){
             await Inventory.insertMany(inventoryLogs, { session });
         }
 
         await session.commitTransaction();
-        session.endSession();
 
         return res.status(201).json({
             success: true,
             message: "Order created successfully!",
-            order: createOrder
+            order: order[0]
         });
     } catch(error){
         await session.abortTransaction();
-        session.endSession();
         console.error("Create order error:", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
             error: error.message
         })
+    } finally{
+        session.endSession();
     }
 }
 
@@ -160,7 +116,7 @@ async function getAllOrders(req, res){
         .populate("customer", "firstName lastName email")
         .populate({
             path: "items.product",
-            select: "productName productPrice productStock createdBy"
+            select: "productName productPrice productStock"
         }).sort({ createdAt: -1 });
 
         if(!orders || orders.length === 0){
@@ -185,6 +141,34 @@ async function getAllOrders(req, res){
     };
 };
 
+async function getMyOrders(req, res){
+    try{
+        if(!req.user || req.user.role !== "Customer"){
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized!"
+            });
+        };
+
+        const orders = await Order.find({ user: getUserId(req)})
+        .populate("items.product", "productName productPrice productImage")
+        .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            success: false,
+            message: "Order fetched successfully!",
+            count: orders.length,
+            orders
+        })
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
+    }
+}
+
 async function cancelOrder(req, res){
 
     const session = await mongoose.startSession();
@@ -198,22 +182,13 @@ async function cancelOrder(req, res){
 
         if(!order){
             await session.abortTransaction();
-
             return res.status(404).json({
                 success: false,
                 message: "Order not found!"
             });
         }
 
-        if(req.user.role !== "Customer" && !req.user.role !== "Admin"){
-            await session.abortTransaction();
-            return res.status(403).json({
-                structuredClone: false,
-                message: "Only admin and customer can cancel order!"
-            });
-        }
-
-        if(req.user.role === "Customer" && String(order.customer) !== String(userId)){
+        if(req.user.role === "Customer" && String(order.user) !== String(userId)){
             await session.abortTransaction();
             return res.status(403).json({
                 success: false,
@@ -228,6 +203,14 @@ async function cancelOrder(req, res){
                 message: "Order already cancelled!"
             });
         };
+
+        if(req.user.role !== "Customer" && !req.user.role !== "Admin"){
+            await session.abortTransaction();
+            return res.status(403).json({
+                structuredClone: false,
+                message: "Only admin and customer can cancel order!"
+            });
+        }
 
         for(const item of order.items){
             const product = await Product.findById(item.product).session(session);
@@ -246,11 +229,10 @@ async function cancelOrder(req, res){
     };
 
         order.orderStatus = "Cancelled"
-
+        order.cancelledAt = new Date();
         await order.save({ session });
 
         await session.commitTransaction();
-        session.endSession();
 
         return res.status(200).json({
             success: true,
@@ -259,44 +241,16 @@ async function cancelOrder(req, res){
         });
     } catch(error){
         await session.abortTransaction();
-        session.endSession();
         console.error("Cancelled order error:", error)
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
             error: error.message
         });
+    } finally{
+        session.endSession();
     }
-}
-
-async function getMyOrders(req, res){
-    try{
-        if(!req.user || req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "Customers can view their orders!"
-            })
-        };
-
-        const userId = getUserId(req);
-
-        const orders = await Order.find({ customer: userId })
-        .populate("items.product", "productName productPrice productImage").sort({ createdAt: -1 });
-
-        return res.status(200).json({
-            success: false,
-            message: "Customer orders fetched!",
-            count: orders.length,
-            orders
-        })
-    } catch(error){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error!",
-            error: error.message
-        })
-    }
-}
+};
 
 async function updateOrderStatus(req, res){
 
@@ -304,7 +258,7 @@ async function updateOrderStatus(req, res){
     session.startTransaction();
 
     try{
-        if(req.user.role !== "Admin"){
+        if(!req.user || req.user.role !== "Admin"){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can update order status!"
@@ -312,19 +266,7 @@ async function updateOrderStatus(req, res){
         };
 
         const orderId = req.params.id;
-
         const { status } = req.body;
-
-        const allowedStatuses = ["Processing", "Shipped", "Delivered", "Cancelled"];
-
-        if(!allowedStatuses.includes(status)){
-            await session.abortTransaction();
-            return res.status(400).json({
-                success: false,
-                message: "Invalid order status!"
-            })
-        }
-
         const order = await Order.findById(orderId).session(session);
 
         if(!order){
@@ -335,30 +277,71 @@ async function updateOrderStatus(req, res){
             });
         };
 
+        const allowedStatuses = [
+            "Processing",
+            "Packed",
+            "Shipped",
+            "Delivered",
+            "Cancelled"
+        ];
+
+        if(!allowedStatuses.includes(status)){
+            await session.abortTransaction();
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order status"
+            })
+        }
+
+        if(order.orderStatus === "Cancelled" || order.Status === "Delivered"){
+            await session.abortTransaction();
+            return res.status(400).json({
+                success: false,
+                message: "Order status can no longer be changed!"
+            })
+        }
+
+        if(status === "Packed"){
+            order.packedAt = new Date();
+        }
+
+        if(status === "Shipped"){
+            order.shippedAt = new Date();
+        }
+
+        if(status === "Delivered"){
+            order.deliveredAt = new Date();
+        }
+
+        if(status === "Cancelled"){
+            order.cancelledAt = new Date()
+        }
+
         if(status === "Cancelled" && order.orderStatus !== "Cancelled"){
-            for (const item of order.items){
+            for(const item of order.items){
                 const product = await Product.findById(item.product).session(session);
-
                 if(!product){
-                    product.productStock += item.quantity;
+                    continue;
+                }
+                product.productStock += item.quantity;
+                await product.save({ session });
 
-                    await product.save({ session });
-
-                    await Inventory.create([{
-                        createdBy: req.user?.userId,
+                await Inventory.create(
+                    [{
+                        createdBy: req.user._id,
                         product: product._id,
                         change: item.quantity,
-                        reason: "Order Cancelled!"
-                    }], { session });
-                };
+                        reason: "Order cancelled by admin"
+                    }],
+                    { session }
+                )
             }
         }
 
         order.orderStatus = status;
-        await order.save({ session });
+        await order.save();
 
         await session.commitTransaction();
-        session.endSession();
 
         return res.status(200).json({
             success: true,
@@ -366,16 +349,15 @@ async function updateOrderStatus(req, res){
             order
         })
     } catch(error){
-        try{
-            await session.abortTransaction();
-            session.endSession();
-        } catch(_){}
+        await session.abortTransaction();
         console.error("updated order status:", error)
         return res.status(500).json({
             success: false,
             message: "Internal server error!",
             error: error.message
         })
+    } finally{
+        session.endSession();
     }
 }
 
@@ -383,6 +365,8 @@ async function generateInvoice(req, res){
 
     try{
         const orderId = req.params.id;
+        const userId = req.user._id;
+        const role = req.user?.role;
 
         const order = await Order.findById(orderId)
         .populate("customer", "firstName lastName email")
@@ -395,10 +379,16 @@ async function generateInvoice(req, res){
             });
         };
 
+        if(role === "Customer" && String(order.user._id) !== String(userId)){
+            return res.status(403).json({
+                success: false,
+            message: "You are not allowed to access this invoice"
+            })
+        }
         const invoiceDir = path.resolve(process.cwd(), "invoices");
         if(!fs.existsSync(invoiceDir)) fs.mkdirSync(invoiceDir, { recursive: true });
 
-        const fileName= `invoice_${order._id}.pdf`;
+        const fileName= `invoice_${order.orderNumber}.pdf`;
         const filePath = path.join(invoiceDir, fileName);
 
         const doc = new PDFDocument({ margin: 50 });
@@ -408,55 +398,66 @@ async function generateInvoice(req, res){
         doc.fontSize(20).text("Order Invoice", { align: "center" });
         doc.moveDown();
 
-        const customerName = `${order.customer.firstName || ""} ${order.customer.lastName || ""}`.trim();
-        doc.fontSize(12).text(`Order ID: ${order._id}`);
-        doc.text(`Customer: ${customerName}`);
-        doc.text(`Email: ${order.customer.email || ""}`);
+        const customerName = `${order.user.name}`;
+        doc.fontSize(12).text(`Order Number: ${order.orderNumber}`);
+        doc.text(`Customer Id : ${order.user._id}`);
+        doc.text(`Customer name: ${customerName}`)
+        doc.text(`Email: ${order.user.email}`);
         doc.text(`Order Date: ${order.createdAt.toLocaleString()}`);
         doc.text(`Order Status: ${order.orderStatus}`);
         doc.moveDown();
 
-        doc.text(`Shipping Address: ${order.address.street}, ${order.address.city}`);
+        const addr = order.shippingAddress;
+        doc.text("Shipping Address:");
+        doc.text(`${addr.name} 
+            ${addr.addressLine1}
+            ${addr.addressLine2 || ""}
+            ${addr.city}, ${addr.state} 
+            ${addr.country} - ${addr.pinCode}`
+        );
+
         doc.moveDown();
 
-        doc.text("Items:");
+        doc.fontSize(14).text(`Items:`);
         doc.moveDown(0.5);
 
-        order.items.forEach(item => {
-            const pname = item.product?.productName || "Product";
-            doc.text(`${pname} * ${item.quantity} = ${item.price * item.quantity}`);
+        order.items.forEach((item, index) => {
+            doc.fontSize(12).text(
+                `${index + 1}. ${item.product.productName} * ${item.quantity} = ₹${item.total}`
+            )
         });
 
         doc.moveDown();
 
-        doc.fontSize(14).text(`Total amount: ₹${order.totalAmount}`, { align: "right" });
+        doc.text(`SubTotal: ₹${order.subTotal}`);
+        doc.text(`Shipping: ₹${order.shippingPrice}`);
+        doc.text(`Discount: ₹${order.discount}`);
+        doc.moveDown();
+
+        doc.fontSize(14).text(`Total Amount: ₹${order.totalAmount}`, {
+            algn: "right"
+        });
 
         doc.end();
 
         writeStream.on("finish", () => {
-            res.download(filePath, fileName, (error) => {
-                if(error){
-                    console.error("Invoice download error:", error);
-                    try{
-                        fs.unlinkSync(filePath);
-                    } catch(_) {}
-                } else{
-                    try{
-                        fs.unlinkSync(filePath);
-                    } catch(_){}
-                }
+            res.download(filePath, fileName, () => {
+                try{
+                    fs.unlinkSync(filePath);
+                } catch(_){}
             });
         });
 
         writeStream.on("error", (error) => {
-            console.error("Invoice write error:", error);
+            console.error("Invoice generation error:", error);
             return res.status(500).json({
                 success: false,
-                message: "Error generating invoice",
+                message: "Failed to generate invoice",
                 error: error.message
-            })
-        })
+            });
+        });
     } catch(error){
+        console.error("Generate invoice error:", error)
         return res.status(500).json({
             success: false,
             message: "Error while generating invoice!",
@@ -470,7 +471,6 @@ export {
     createOrder,
     cancelOrder,
     getAllOrders,
-    getAdminOrders,
     getMyOrders,
     updateOrderStatus,
     generateInvoice
