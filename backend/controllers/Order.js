@@ -5,6 +5,7 @@ import { Order } from "../models/Order";
 import PDFDocument, { path } from "pdfkit";
 import fs from "fs";
 import mongoose from "mongoose";
+import { success } from "zod";
 
 
 const getUserId = (req) => req.user?.userId || req.user?._id;
@@ -28,6 +29,7 @@ async function createOrder(req, res){
         const { items, paymentMethod, addressId } = req.body;
 
         if(!Array.isArray(items || items.length || !addressId)){
+            await session.abortTransaction();
             return res.status(403).json({
                 success: false,
                 message: "Items and addressId is required!"
@@ -70,7 +72,7 @@ async function createOrder(req, res){
                 await session.abortTransaction();
                 return res.status(400).json({
                     success: false,
-                    message: `Insufficient stock for the product ${product.productName}`
+                message: `Insufficient stock for ${product.productName}`
                 })
             }
 
@@ -101,7 +103,8 @@ async function createOrder(req, res){
 
             const addressString = `${address.fullName}, ${address.addressLine1}${address.addressLine2 ? "," + address.addressLine1 : ""}, ${address.city}, ${address.state}, ${address.country} - ${address.pinCode}`;
 
-            const createOrder = await Order.create([{
+        const createOrder = await Order.create(
+            [{
                 customer: userId,
                 items: orderItems,
                 totalAmount,
@@ -110,6 +113,13 @@ async function createOrder(req, res){
                 paymentStatus: "Pending",
                 orderStatus: "Processing"
             }], { session });
+        };
+
+        if(!createOrder){
+            return res.status(404).json({
+                success: false,
+                message: "Order can not be created!"
+            });
         };
 
         if(inventoryLogs.length){
@@ -122,13 +132,11 @@ async function createOrder(req, res){
         return res.status(201).json({
             success: true,
             message: "Order created successfully!",
-            order: createOrder[0]
+            order: createOrder
         });
     } catch(error){
-        try{
-            await session.abortTransaction();
-            session.endSession();
-        } catch(_){}
+        await session.abortTransaction();
+        session.endSession();
         console.error("Create order error:", error);
         return res.status(500).json({
             success: false,
@@ -141,7 +149,7 @@ async function createOrder(req, res){
 async function getAllOrders(req, res){
 
     try{
-        if(req.user.role !== "Admin"){
+        if(!req.user || req.user.role !== "Admin"){
             return res.status(403).json({
                 success: false,
                 message: "Admin can only get the orders!"
@@ -154,6 +162,13 @@ async function getAllOrders(req, res){
             path: "items.product",
             select: "productName productPrice productStock createdBy"
         }).sort({ createdAt: -1 });
+
+        if(!orders || orders.length === 0){
+            return res.status(404).json({
+                success: false,
+                message: "Order could not found!"
+            })
+        }
 
         return res.status(200).json({
             success: true,
@@ -168,68 +183,7 @@ async function getAllOrders(req, res){
             error: error.message
         });
     };
-}
-
-async function getAdminOrders(req, res){
-
-    try{
-
-        const adminId = getUserId(req);
-
-        const adminProducts = await Product.find({
-            createdBy: adminId
-        }).select( "_id").lean();
-
-        const adminProductIds = adminProducts.map(p => p._id.toString());
-
-        if(adminProductIds.length === 0){
-            return res.status(200).json({
-                success: true,
-                message: "No products found for this admin!",
-                count: 0,
-                orders: []
-            })
-        }
-
-        const orders = await Order.find()
-        .populate("customer", "firstName lastName email")
-        .populate("items.product","productName productPrice productStock createdBy"
-        ).sort({ createdBy: -1 });
-
-        const filtered = orders.map(order => {
-            const adminItems = order.items.filter(item => adminProductIds.includes(String(item.product._id)));
-
-            if(adminItems.length === 0){
-                return null;
-            }
-
-            if(adminItems.length > 0){
-                return {
-                    _id: order._id,
-                    customer: order.customer,
-                    orderStatus: order.orderStatus,
-                    paymentStatus: order.paymentStatus,
-                    totalAmount: order.totalAmount,
-                    createdAt: order.createdAt,
-                    items: adminItems
-                }
-            }
-        }).filter(Boolean);
-
-        return res.status(200).json({
-            success: true,
-            message: "admin's orders fetched successfully!",
-            count: filtered.length,
-            orders: filtered
-        });
-    } catch(error){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error!",
-            error: error.message
-        })
-    }
-}
+};
 
 async function cancelOrder(req, res){
 
@@ -245,31 +199,31 @@ async function cancelOrder(req, res){
         if(!order){
             await session.abortTransaction();
 
-            return res.status(403).json({
+            return res.status(404).json({
                 success: false,
                 message: "Order not found!"
             });
         }
 
-        if(req.user.role === "Customer" && String(order.customer) !== String(userId)){
+        if(req.user.role !== "Customer" && !req.user.role !== "Admin"){
             await session.abortTransaction();
-            return res.status(400).json({
+            return res.status(403).json({
                 structuredClone: false,
-                message: "You can cancel your own order only!"
+                message: "Only admin and customer can cancel order!"
             });
         }
 
-        if(req.user.role !== "Admin" && req.user.role !== "Customer"){
+        if(req.user.role === "Customer" && String(order.customer) !== String(userId)){
             await session.abortTransaction();
-            return res.status(400).json({
+            return res.status(403).json({
                 success: false,
-                message: "Only Admin and customer can cancel their orders!"
+                message: "Customer can cancel their own order!"
             });
         };
 
         if(order.orderStatus === "Cancelled"){
             await session.abortTransaction();
-            return res.status(403).json({
+            return res.status(400).json({
                 success: false,
                 message: "Order already cancelled!"
             });
@@ -304,10 +258,8 @@ async function cancelOrder(req, res){
             order
         });
     } catch(error){
-        try{
-            await session.abortTransaction();
-            session.endSession();
-        } catch (_){}
+        await session.abortTransaction();
+        session.endSession();
         console.error("Cancelled order error:", error)
         return res.status(500).json({
             success: false,
@@ -319,10 +271,10 @@ async function cancelOrder(req, res){
 
 async function getMyOrders(req, res){
     try{
-        if(req.user.role !== "Customer"){
+        if(!req.user || req.user.role !== "Customer"){
             return res.status(403).json({
                 success: false,
-                message: "Only customers can view their orders!"
+                message: "Customers can view their orders!"
             })
         };
 
