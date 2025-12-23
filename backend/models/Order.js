@@ -77,24 +77,15 @@ const OrderSchema = new mongoose.Schema({
     },
 
     trackingNumber: {
-        type: String,
-        trim: true
+        type: String
     },
 
     courier: {
-        type: String,
-        trim: true
+        type: String
     },
 
     notes: {
-        type: String,
-        trim: true
-    },
-
-    coupon: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Coupon',
-        default: null
+        type: String
     },
 
     shippedAt: {
@@ -115,15 +106,11 @@ const OrderSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-OrderSchema.index({ orderNumber: 1 });
-OrderSchema.index({ user: 1, orderStatus: 1 });
-
 OrderSchema.pre("save", function(next){
-    if(this.items && this.items.length > 0){
-        const itemsTotal = this.items.reduce((sum, item) => sum + item.total, 0);
+    
+        const itemsTotal = this.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
         this.subTotal = itemsTotal;
         this.totalAmount = itemsTotal + (this.shippingPrice || 0) ( this.discount || 0);
-    }
     next()
 })
 
