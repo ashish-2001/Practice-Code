@@ -1,4 +1,3 @@
-import { success } from "zod";
 import { StockHistory } from "../models/StockHistory";
 import mongoose from "mongoose";
 import { Product } from "../models/Product";
@@ -7,41 +6,26 @@ const getUserId = (req) => req.user?.userId || req.user._id;
 
 async function logStockHistory({ productId, quantityChange, reason, changedBy, orderId = null, note = "", session = null }){
     
-    try{
-        if(!productId || !quantityChange || !changedBy){
-            return res.status(403).json({
-                success: false,
-                message: "Missing stock history required fields!"
-            })
-        }
-
-        const historyData = {
-            product: productId,
-            change: quantityChange,
-            reason,
-            changedBy,
-            note
-        };
-
-        if(orderId){
-            historyData.order = orderId;
-        }
-
-        const options = session ? { session } : {};
-
-        await StockHistory.create([historyData], options);
-
-        return res.status(200).json({
-            success: false,
-            message: ""
-        })
-    } catch(e){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: e.message
-        })
+    if(!productId || !quantityChange || !changedBy){
+        throw new Error("Missing stock history required fields!")
+        
     }
+
+    const historyData = {
+        product: productId,
+        change: quantityChange,
+        reason,
+        changedBy,
+        note
+    };
+
+    if(orderId){
+        historyData.order = orderId;
+    }
+
+    const options = session ? { session } : {};
+
+    await StockHistory.create([historyData], options);
 }
 
 async function getAllStockHistory(req, res){
@@ -171,7 +155,7 @@ async function manualStockAdjustment(req, res){
         session.endSession();
         return res.status(500).json({
             success: false,
-            message: "Internal server error",,
+            message: "Internal server error",
             error: e.message
         });
     };
