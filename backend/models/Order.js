@@ -106,6 +106,9 @@ const OrderSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
+OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index({ user: 1, orderStatus: 1 });
+
 OrderSchema.pre("save", function(next){
     
         const itemsTotal = this.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
