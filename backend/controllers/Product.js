@@ -378,7 +378,7 @@ async function searchProduct(req, res){
             error
         });
     };
-}
+};
 
 
 export {
@@ -388,4 +388,4 @@ export {
     editProducts,
     deleteProduct,
     searchProduct
-}
+};
