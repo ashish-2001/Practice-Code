@@ -11,7 +11,7 @@ const inventoryValidator = z.object({
 
 async function createInventory(req, res){
 
-    if(!req.user || req.user.role !== "Admin"){
+    if(!req.user){
         return res.status(403).json({
             success: false,
             message: "Only admin can create inventory"
@@ -96,7 +96,7 @@ async function createInventory(req, res){
 
 async function getAllInventory(req, res){
 
-    if(!req.user || req.user._id !== "Admin"){
+    if(!req.user){
         return res.status(403).json({
             success: false,
             message: "Only admin can view inventory logs"
@@ -137,7 +137,7 @@ async function getProductInventory(req, res){
 
     try{
         
-        if(!req.user || req.user._id !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can access product inventory"
@@ -192,7 +192,7 @@ async function editInventory(req, res){
 
     try{
 
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can edit the inventory"
