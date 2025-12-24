@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import { User } from "../models/User.js";
 import { ContactForm } from "../models/ContactForm.js";
 
@@ -76,14 +76,8 @@ async function getAllFormMessages(req, res){
 
     try{
 
-        if(req.user.role !== "Admin"){
-            return res.status(403).json({
-                success: false,
-                message: "Only admin can view all the messages!"
-            });
-        }
-
-        const messages = await ContactForm.find({})
+        const userId = req.user._id;
+        const messages = await ContactForm.find(userId, {})
         .populate("user", "firstName lastName email contactNumber message").sort({
             createdAt: -1
         });
@@ -106,12 +100,15 @@ async function updateFormMessageStatus(req, res){
 
     try{
 
-        if(req.user.role !== "Admin"){
-            return res.status(400).json({
+        const userId = req.user._id;
+
+        if(!userId){
+            return res.status(403).json({
                 success: false,
-                message: "Only admins can update message status!"
+                message: "User not found"
             })
-        }
+        };
+        
         const { messageId } = req.params;
         const { status } = req.body;
 
