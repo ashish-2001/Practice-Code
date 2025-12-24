@@ -41,6 +41,16 @@ const UserSchema = new mongoose.Schema({
         required: true
     },
 
+    dateOfBirth: {
+        type: String,
+        required: true
+    },
+
+    gender: {
+        type: String,
+        required: true
+    },
+    
     addresses: [
         {
             label: {
