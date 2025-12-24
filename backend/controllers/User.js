@@ -427,7 +427,7 @@ async function adminDashboard(req, res){
             success: false,
             message: "Failed to load dashboard metrics!",
             error: error.message
-        })
+        });
     };
 };
 
