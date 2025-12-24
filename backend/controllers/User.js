@@ -8,6 +8,7 @@ import otpGenerator from "otp-generator";
 import dotenv from "dotenv";
 import { Order } from "../models/Order.js";
 import { ACCOUNT_TYPE } from "../utils"
+import { uploadImageToCloudinary } from "../utils/imageUploader.js";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -485,11 +486,139 @@ async function updateProfile(req, res){
     };
 };
 
+async function updateDisplayPicture(req, res){
+
+    try{
+        const profileImage = req.files?.profileImage;
+
+        const userId = req.user?._id;
+
+        const uploadedImage = await uploadImageToCloudinary(
+            profileImage,
+            process.env.FOLDER_NAME,
+            1000,
+            1000
+        )
+
+        console.log("Profile Image:-", uploadedImage);
+
+        const updatedProfile = await User.findByIdAndUpdate(
+            userId, {
+                profileImage: uploadedImage.secure_url
+            }, {
+                new: true
+            }
+        );
+
+        if(!profileImage){
+            return res.status(404).json({
+                success: false,
+                message: "Image not found"
+            });
+        };
+
+        return res.status(200).json({
+            success: false,
+            message: "Profile image updated successfully!"
+        });
+
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
+    }
+}
+
+const deleteAccountValidator = z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid user id")
+});
+
+async function deleteAccount(req, res){
+
+    try{
+        const parsedResult = deleteAccountValidator.safeParse(req.body);
+
+        if(!parsedResult.success){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user id"
+            });
+        };
+
+        const userId = req.user?._id;
+
+        const userDetails = await User.findById({ _id: userId });
+
+        if(!userDetails){
+            return res.status(404).json({
+                success: false,
+                message: "User not found!"
+            });
+        };
+
+        await User.findByIdAndDelete({ _id: userId });
+
+        return res.status(200).json({
+            success: false,
+            message: "Account deleted successfully!"
+        });
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
+    }
+}
+
+async function getAllUserDetails(req, res){
+    try{
+        const userId = req.user._id;
+
+        const userDetails = await User.findById(userId).sort({ createdAt: -1 });
+
+        if(!userDetails){
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        };
+
+        return res.status(200).json({
+            success: false,
+            message: "User data fetched successfully!"
+        });
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
+    }
+}
+
+async function getPurchasedProducts(req, res){
+    try{
+
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        });
+    };
+};
+
 export {
     signup,
     sendOtp,
     signin,
     changePassword,
     adminDashboard,
-    updateProfile
+    updateProfile,
+    updateDisplayPicture,
+    deleteAccount,
+    getAllUserDetails
 };
