@@ -381,7 +381,7 @@ async function adminDashboard(req, res){
 
     try{
 
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(404).json({
                 success: false,
                 message: "Unauthorized!"
