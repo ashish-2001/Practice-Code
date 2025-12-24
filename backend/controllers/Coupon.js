@@ -28,13 +28,6 @@ async function createCoupon(req, res){
 
     try{
 
-        if(req.user.role !== "Admin"){
-            return res.status(400).json({
-                success: false,
-                message: "Only admin can create coupon!"
-            });
-        };
-
         const parsedResult = couponValidator.safeParse(req.body);
 
         if(!parsedResult.success){
@@ -44,14 +37,14 @@ async function createCoupon(req, res){
             });
         };
 
-        const { data } = parsedResult.data;
+        const data = parsedResult.data;
 
-        const existing = await Product.findOne({
+        const existingCoupon = await Product.findOne({
             code: data.code
         });
 
-        if(existing){
-            return res.status(409).json({
+        if(existingCoupon){
+            return res.status(400).json({
                 success: false,
                 message: "Coupon code already exist!"
             });
@@ -61,6 +54,13 @@ async function createCoupon(req, res){
 
         if(data.appliesTo === "products"){
             appliesToModel = "Product"
+
+            if(!Array.isArray(data.appliesIds) || !data.appliesIds.length){
+                return res.status(400).json({
+                    success: false,
+                    message: "Product ids are required"
+                })
+            }
 
             const count = await Product.countDocuments({ _id: { $in: data.appliesIds }})
 
@@ -72,8 +72,15 @@ async function createCoupon(req, res){
             }
         }
 
-        if(data.appliesTo === "categories"){
+        else if(data.appliesTo === "categories"){
             appliesToModel = "Category";
+
+            if(!Array.isArray(data.appliesIds) || !data.appliesIds.length){
+                return res.status(400).json({
+                    success: false,
+                    message: "Category ids are required!"
+                })
+            }
             const count = await Category.countDocuments({ _id: {
                 $in: data.appliesIds
             }})
@@ -84,6 +91,11 @@ async function createCoupon(req, res){
                     message: "Invalid category Id"
                 })
             }
+        } else{
+            return res.status(400).json({
+                success: false,
+                message: "Invalid appliesTo value. Must be product or categories"
+            })
         }
 
         const coupon = await Coupon.create({
