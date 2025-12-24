@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z from "zod";
 import { User } from "../models/User.js";
 import { ContactForm } from "../models/ContactForm.js";
 
@@ -108,7 +108,7 @@ async function updateFormMessageStatus(req, res){
                 message: "User not found"
             })
         };
-        
+
         const { messageId } = req.params;
         const { status } = req.body;
 
