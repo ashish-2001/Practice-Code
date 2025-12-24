@@ -70,14 +70,9 @@ async function getAllBanner(req, res){
 
     try{
 
-        if(req.user.role !== "Admin"){
-            return res.status(403).json({
-                success: false,
-                message: "Unauthorized access"
-            })
-        };
+        const userId = req.user._id;
 
-        const banners = await Banner.find({ isDeleted: false })
+        const banners = await Banner.find(userId, { isDeleted: false })
         .populate("createdBy", "name email")
         .populate("updatedBy", "name email")
         .populate("deletedBy", "name email")
@@ -102,13 +97,6 @@ const bannerUpdatedValidator = bannerValidator.partial();
 async function updateBanner(req, res){
 
     try{
-
-        if(req.user.role === "Admin"){
-            return res.status(400).json({
-                success: false,
-                message: "Only Admin can update banner!"
-            });
-        };
 
         const { bannerId } = req.params;
         const userId = req.user._id;
@@ -200,13 +188,6 @@ async function getSingleBanner(req, res){
 async function deleteBanner(req, res){
 
     try{
-
-        if(req.user.role !== "Admin"){
-            return res.status(400).json({
-                success: false,
-                message: "Only admin can delete banner!"
-            });
-        };
 
         const { bannerId } = req.params;
         const userId = req.user._id;
