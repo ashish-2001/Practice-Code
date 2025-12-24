@@ -578,7 +578,7 @@ async function getAllUserDetails(req, res){
     try{
         const userId = req.user._id;
 
-        const userDetails = await User.findById(userId).sort({ createdAt: -1 });
+        const userDetails = await User.findById(userId).select("-password").populate("addresses").sort({ createdAt: -1 });
 
         if(!userDetails){
             return res.status(404).json({
