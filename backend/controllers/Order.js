@@ -5,7 +5,6 @@ import { Order } from "../models/Order";
 import PDFDocument, { path } from "pdfkit";
 import fs from "fs";
 import mongoose from "mongoose";
-import { success } from "zod";
 
 
 const getUserId = (req) => req.user?.userId || req.user?._id;
@@ -105,7 +104,7 @@ async function createOrder(req, res){
 async function getAllOrders(req, res){
 
     try{
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Admin can only get the orders!"
@@ -143,7 +142,7 @@ async function getAllOrders(req, res){
 
 async function getMyOrders(req, res){
     try{
-        if(!req.user || req.user.role !== "Customer"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Unauthorized!"
@@ -258,7 +257,7 @@ async function updateOrderStatus(req, res){
     session.startTransaction();
 
     try{
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can update order status!"
