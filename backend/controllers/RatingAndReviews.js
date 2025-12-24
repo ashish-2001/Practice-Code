@@ -153,12 +153,12 @@ async function getAllRatingAndReviews(req, res){
             message: "Internal server error!",
             error
         });
-    }
-}
+    };
+};
 
 
 export {
     createRatingAndReview,
     getAverageRating,
     getAllRatingAndReviews
-}
+};
