@@ -4,27 +4,35 @@ async function auth(req, res, next){
 
     try{
 
-        const token = req.cookies.token || req.headers("Authorization").replace("Bearer ", "") || req.body.token;
+        let token = null;
+
+        if(req.cookies && req.cookies.token){
+            token = req.cookies.token;
+        } else if(req.headers.authorization && req.headers.authorization.startsWith("Bearer ")){
+            token = req.headers.authorization.split(" ")[1];
+        } else if(req.body && req.body.token){
+            token = req.body.token;
+        };
 
         if(!token){
-            return res.status(403).json({
+            return res.status(401).json({
                 success: false,
-                message: "Unauthorized!"
+                message: "Unauthorized. Token not provided"
             });
         };
 
-        const decode = await jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = await jwt.verify(token, process.env.JWT_SECRET);
 
-        console.log("Decoded data:", decode);
+        console.log("Decoded data:", decoded);
 
-        req.user = decode;
+        req.user = decoded;
 
         next();
-    } catch(error){
+    } catch(e){
         return res.status(500).json({
             success: false,
             message: "Interval server error!",
-            error: error.message
+            error: e.message
         });
     };
 
@@ -34,7 +42,7 @@ async function isAdmin(req, res, next){
 
     try{
 
-        if(req.user.role !== "Admin"){
+        if(!req.user || req.user.role !== "Admin"){
             return res.status(403).json({
                 success: false,
                 message: "This is a protected route for admin only!"
@@ -43,11 +51,11 @@ async function isAdmin(req, res, next){
 
         next();
 
-    } catch(error){
+    } catch(e){
         return res.status(500).json({
             success: false,
             message: "Interval server error!",
-            error: error.message
+            error: e.message
         });
     };
 
@@ -57,7 +65,7 @@ function isCustomer(req, res, next){
 
     try{
 
-        if(req.user.role !== "Customer"){
+        if(!req.user || req.user.role !== "Customer"){
             return res.status(403).json({
                 success: false,
                 message: "This is a protected route for customer only!"
@@ -66,11 +74,11 @@ function isCustomer(req, res, next){
 
         next();
 
-    } catch(error){
+    } catch(e){
         return res.status(500).json({
             success: false,
             message: "Interval server error!",
-            error: error
+            error: e.message
         });
     };
 
