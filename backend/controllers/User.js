@@ -457,21 +457,24 @@ async function updateProfile(req, res){
             });
         };
 
-        const user = await User.findByIdAndUpdate(userId, {
+        const updatedUser = await User.findByIdAndUpdate(userId, {
             name,
             phone,
             dateOfBirth,
             gender
         });
 
-        await user.save();
-
-        const updatedUserDetails = await User.findById(userId).populate("user");
+        if(!updatedUser){
+            return res.status(400).json({
+                success: false,
+                message: "User cannot be updated successfully!"
+            });
+        };
 
         return res.status(200).json({
             success: false,
             message: "Profile updated successfully",
-            updatedUserDetails
+            updatedUser
         });
     } catch(e){
         return res.status(500).json({
