@@ -32,13 +32,6 @@ const updateAddressValidator = z.object({
 async function createAddress(req, res){
 
     try{
-
-        if(req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "Only customer can create address!"
-            })
-        }
         
         const parsedResult = addressValidator.safeParse(req.body);
 
@@ -131,13 +124,6 @@ async function getSingleAddress(req, res){
 
     try{
 
-        if(req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "Only customers can view address"
-            })
-        }
-
         const address = await Address.findOne({
             _id: req.params.id,
             user: req.user._id
@@ -168,12 +154,6 @@ async function getSingleAddress(req, res){
 async function updateAddress(req, res){
 
     try{
-        if(req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "Only customer can update address!"
-            });
-        };
 
         const parsedResult = updateAddressValidator.safeParse(req.body);
 
@@ -230,12 +210,6 @@ async function updateAddress(req, res){
 async function deleteAddress(req, res){
 
     try{
-        if(req.user.role !== "Customer"){
-            return res.status(403).json({
-                success: false,
-                message: "Only customer can delete his own address!"
-            });
-        };
 
         const userId = req.user._id;
 
