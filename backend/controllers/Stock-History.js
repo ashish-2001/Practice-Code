@@ -2,7 +2,7 @@ import { StockHistory } from "../models/StockHistory";
 import mongoose from "mongoose";
 import { Product } from "../models/Product";
 
-const getUserId = (req) => req.user?.userId || req.user._id;
+const getUserId = (req) => req.user?.userId || req.user?._id;
 
 async function logStockHistory({ productId, quantityChange, reason, changedBy, orderId = null, note = "", session = null }){
     
@@ -44,6 +44,13 @@ async function getAllStockHistory(req, res){
         .populate("changedBy", "name email")
         .sort({ createAt: -1 });
 
+        if(!StockHistory){
+            return res.status(404).json({
+                success: false,
+                message: "Stock history could not found!"
+            });
+        };
+
         return res.status(200).json({
             success: false,
             message: "All the history of the stock of the product is fetched successfully",
@@ -76,6 +83,13 @@ async function getStockHistoryByProduct(req, res){
         .populate("changedBy", "name email")
         .sort({ createdAt: -1 });
 
+        if(!history){
+            return res.status(404).json({
+                success: false,
+                message: "Stock history of the product could not be found!"
+            });
+        };
+
         return res.status(200).json({
             success: false,
             message: "All product stock history is fetched",
@@ -98,6 +112,8 @@ async function manualStockAdjustment(req, res){
     try{
 
         if(!req.user || req.user.role !== "Admin"){
+            await session.abortTransaction();
+            session.endSession();
             return res.status(403).json({
                 success: false,
                 message: "Only admin can adjust the stock of the product"
@@ -108,6 +124,7 @@ async function manualStockAdjustment(req, res){
 
         if(!productId || !quantityChange){
             await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({
                 success: false,
                 message: "Product id and quantity change are required!"
@@ -115,7 +132,10 @@ async function manualStockAdjustment(req, res){
         };
 
         const product = await Product.findById(productId).session(session);
+
         if(!product){
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({
                 success: false,
                 message: "Product not found!"
@@ -131,7 +151,7 @@ async function manualStockAdjustment(req, res){
             })
         }
 
-        await product.save();
+        await product.save({ session });
 
         await logStockHistory({
             productId,
@@ -177,6 +197,12 @@ async function getStockHistoryByOrder(req, res){
         .populate("changedBy", "firstName lastName")
         .sort({ createdAt: -1 });
 
+        if(!history){
+            return res.status(404).json({
+                success: false,
+                message: "History of the order could not be found!"
+            });
+        };
         return res.status(200).json({
             success: true,
             message: "Stock of the product is fetched successfully",
