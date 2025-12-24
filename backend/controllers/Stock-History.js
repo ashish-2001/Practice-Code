@@ -31,7 +31,7 @@ async function logStockHistory({ productId, quantityChange, reason, changedBy, o
 async function getAllStockHistory(req, res){
 
     try{
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).jso({
                 success: false,
                 message: "Only admin can get all the history of the stocks of all the products"
@@ -69,7 +69,7 @@ async function getAllStockHistory(req, res){
 async function getStockHistoryByProduct(req, res){
 
     try{
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can view product history stock"
@@ -111,7 +111,7 @@ async function manualStockAdjustment(req, res){
     session.startTransaction();
     try{
 
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             await session.abortTransaction();
             session.endSession();
             return res.status(403).json({
@@ -183,7 +183,7 @@ async function manualStockAdjustment(req, res){
 
 async function getStockHistoryByOrder(req, res){
     try{
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can get the history of stock"
