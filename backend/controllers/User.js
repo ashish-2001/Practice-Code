@@ -1,4 +1,4 @@
-import z, { success } from "zod";
+import z, { map } from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
@@ -519,7 +519,8 @@ async function updateDisplayPicture(req, res){
 
         return res.status(200).json({
             success: false,
-            message: "Profile image updated successfully!"
+            message: "Profile image updated successfully!",
+            updatedProfile
         });
 
     } catch(e){
@@ -602,7 +603,58 @@ async function getAllUserDetails(req, res){
 async function getPurchasedProducts(req, res){
     try{
 
-    } catch(e){
+        const userId = req.user._id;
+
+        if(!userId){
+            return res.status(403).json({
+                success: false,
+                message: "User not found!"
+            });
+        };
+
+        const orders = await Order.find({
+            user: userId,
+            paymentStatus: "Paid"
+        })
+        .populate("items.product", "productName price productImage")
+        .sort({ createdAt: -1 });
+
+        if(!orders.length){
+            return res.status(200).json({
+                success: true,
+                message: "No purchased products found",
+                products: []
+            })
+        };
+
+        const productMap = new map();
+
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const productId = item.product._id.toString();
+
+                if(!productMap.has(productId)){
+                    productMap.set(productId, {
+                        _id: item.product._id,
+                        name: item.product.productName,
+                        image: item.product.imageName,
+                        price: item.price,
+                        totalQuantity: item.quantity,
+                        lastPurchasedAt: order.createdAt
+                    })
+                } else{
+                    productMap.get(productId).totalQuantity += item.quantity
+                }
+            })
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Purchased product fetched successfully",
+            count: productMap.size,
+            products: Array.from(productMap.values())
+        })
+        } catch(e){
         return res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -620,5 +672,6 @@ export {
     updateProfile,
     updateDisplayPicture,
     deleteAccount,
-    getAllUserDetails
+    getAllUserDetails,
+    getPurchasedProducts
 };
