@@ -31,7 +31,7 @@ const signupValidator = z.object({
 
 const updateProfileValidator = z.object({
     name: z.string().min(1, "Name is required"),
-    gender: z.enum(["Male", "Female"]),
+    gender: z.enum(["Male", "Female"]), 
     dateOfBirth: z.string().optional(),
     phone: z.string().regex(/^[0-9]{10}$/, "Phone number is required")
 });
@@ -61,17 +61,17 @@ async function signup(req, res){
             otp
         } = parsedResult.data;
 
-        const existingUser = await User.findOne({
-            email,
-            role
-        });
-
         if(password !== confirmPassword){
             return res.status(402).json({
                 success: true,
                 message: "Password and confirm password should be equal!"
             })
         }
+
+        const existingUser = await User.findOne({
+            email,
+            role
+        });
 
         if(existingUser){
             return res.status(402).json({
@@ -80,8 +80,6 @@ async function signup(req, res){
             });
         };
 
-        const profileImage = req.files.profileImage;
-        
         const otpRecord = await Otp.findOne({
             email,
             role,
@@ -94,6 +92,8 @@ async function signup(req, res){
                 message: "Invalid otp!"
             })
         }
+
+        const profileImage = req.files.profileImage;
 
         const hashedPassword = await bcrypt.hash(password, 10);
 

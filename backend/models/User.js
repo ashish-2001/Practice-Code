@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Address } from "./Address";
 
 const UserSchema = new mongoose.Schema({
 
@@ -47,25 +48,10 @@ const UserSchema = new mongoose.Schema({
         required: true
     },
     
-    addresses: [
-        {
-            label: {
-                type: String
-            },
-
-            name: String,
-            phone: String,
-            addressLine1: String,
-            addressLine2: String,
-            city: String,
-            state: String,
-            postalCode: String,
-            country: {
-                type: String,
-                default: 'Bharat'
-            }
-        }
-    ],
+    addresses: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Address"
+    },
 
     lastLogin: {
         type: Date,
