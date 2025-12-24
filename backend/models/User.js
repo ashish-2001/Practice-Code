@@ -48,10 +48,10 @@ const UserSchema = new mongoose.Schema({
         required: true
     },
     
-    addresses: {
+    addresses: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Address"
-    },
+    }],
 
     lastLogin: {
         type: Date,
