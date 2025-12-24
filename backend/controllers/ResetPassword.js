@@ -113,7 +113,7 @@ async function resetPassword(req, res){
             return res.status(410).json({
                 success: false,
                 message: "Reset token has expired! Please request a new one."
-            })
+            });
         };
 
         const hashedPassword = await bcrypt.hash(password, 10);
