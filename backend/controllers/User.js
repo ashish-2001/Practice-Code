@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { success } from "zod";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
@@ -23,7 +23,16 @@ const signupValidator = z.object({
     password: z.string().min(6, "Password must be of at least 6 characters!"),
     confirmPassword: z.string().min(6, "Confirm Password must be of at least 6 characters!"),
     role: z.enum([ACCOUNT_TYPE.CUSTOMER, ACCOUNT_TYPE.ADMIN]),
+    gender: z.string().optional(),
+    dateOfBirth: z.string().optional(),
     otp: z.string().min(6, "Otp is required!")
+});
+
+const updateProfileValidator = z.object({
+    name: z.string().min(1, "Name is required"),
+    gender: z.enum(["Male", "Female"]),
+    dateOfBirth: z.string().optional(),
+    phone: z.string().regex(/^[0-9]{10}$/, "Phone number is required")
 });
 
 async function signup(req, res){
@@ -46,6 +55,8 @@ async function signup(req, res){
             password,
             confirmPassword,
             role,
+            dateOfBirth,
+            gender,
             otp
         } = parsedResult.data;
 
@@ -90,6 +101,8 @@ async function signup(req, res){
             email: email,
             phone: phone,
             password: hashedPassword,
+            dateOfBirth,
+            gender,
             role: role,
             profileImage: profileImage
         });
@@ -415,14 +428,65 @@ async function adminDashboard(req, res){
             message: "Failed to load dashboard metrics!",
             error: error.message
         })
-    }
-}
+    };
+};
 
+async function updateProfile(req, res){
+
+    try{
+
+        const parsedResult = updateProfileValidator.safeParse(req.body);
+
+        if(!parsedResult.success){
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required!"
+            });
+        };
+
+        const { name, dateOfBirth, gender, phone } = parsedResult.data;
+
+        const userId = req.user._id;
+
+        const profileDetails = await User.findById(userId);
+
+        if(!profileDetails){
+            return res.status(404).json({
+                success: false,
+                message: "User not found!"
+            });
+        };
+
+        const user = await User.findByIdAndUpdate(userId, {
+            name,
+            phone,
+            dateOfBirth,
+            gender
+        });
+
+        await user.save();
+
+        const updatedUserDetails = await User.findById(userId).populate("user");
+
+        return res.status(200).json({
+            success: false,
+            message: "Profile updated successfully",
+            updatedUserDetails
+        });
+    } catch(e){
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        });
+    };
+};
 
 export {
     signup,
     sendOtp,
     signin,
     changePassword,
-    adminDashboard
+    adminDashboard,
+    updateProfile
 };
