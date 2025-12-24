@@ -152,7 +152,7 @@ async function getAllFestival(req, res){
 
     try{
 
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can get the festival"
@@ -239,7 +239,7 @@ async function getAllActiveFestival(req, res){
 async function getSingleFestival(req, res){
 
     try{
-        if(!req.user || req.user.role !== "Customer"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only Customer can get the festival"
@@ -297,7 +297,7 @@ async function getSingleFestival(req, res){
 async function deleteFestival(req, res){
     try{
 
-        if(!req.user || req.user.role !== "Admin"){
+        if(!req.user){
             return res.status(403).json({
                 success: false,
                 message: "Only admin can delete the festival"
