@@ -6,6 +6,8 @@ import { Transaction } from "../models/Transaction";
 import { mailSender } from "../utils/mailSender";
 import { refundSuccessfulEmail } from "../mail/templates/refundSuccessfulEmail";
 import { success } from "zod";
+import { verifyRazorpayWebhook } from "../utils/verifyRazorpayWebhook";
+import { isValid } from "zod/v3";
 
 async function requestRefund(req, res){
 
@@ -96,7 +98,75 @@ async function requestRefund(req, res){
     }
 };
 
+async function razorpayWebhook(req, res){
 
+    try{
+        const valid = verifyRazorpayWebhook(req);
+
+        if(!isValid){
+            return res.status(401).json({
+                success: false,
+                message: "Field is required"
+            })
+        }
+
+        const event = req.body.event;
+        const payload = req.body.payload;
+
+        if(event === "refund.processed"){
+            const refund = payload.refund.entry;
+            const paymentId = refund.payment_id;
+
+            const session = await session.startSession();
+            session.startTransaction();
+
+            const transaction = await Transaction.findOne({
+                txnId: paymentId
+            }).session({ session });
+
+            if(!transaction){
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(200).json({
+                    success: true
+                })
+            }
+
+            const order = await Order.findById(transaction.order).session(session);
+
+            if(!order || order.paymentStatus === "Refunded"){
+                await session.commitTransaction()
+                session.endSession();
+                return res.status(200).json({
+                    success: true
+                });
+            }
+            for(const item of order.items){
+                await Product.findByIdAndUpdate(
+                    item.product,
+                    { $inc: { stock: item.quantity }},
+                    { session }
+                )
+            };
+
+            transaction.status = "Refunded";
+            transaction.providerResponse = refund;
+
+            order.paymentStatus = "Refunded";
+            order.orderStatus = "Refunded";
+            order.refundedAt = new Date();
+
+            await transaction.save({ session });
+            await order.save({ session });
+
+            await session.commitTransaction();
+            session.endSession();
+            }
+        } catch(e){
+            await session.abortTransaction();
+            session.endSession();
+    }
+}
 
 async function refundPayment(req, res){
 
