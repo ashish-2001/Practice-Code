@@ -119,46 +119,6 @@ async function getAllProducts(req, res){
     };
 };
 
-async function getAdminProducts(req, res){
-
-    try{
-
-        const adminId = req.admin?.adminId;
-
-        const admin = await User.findById(adminId);
-
-        if(!admin){
-            return res.status(402).json({
-                success: false,
-                message: "admin not found!"
-            });
-        };
-
-        const allProducts = await Product.find({
-            createdBy: adminId
-        }).populate("category").exec();
-
-        if(!allProducts){
-            return res.status(402).json({
-                success: false,
-                message: "Products data could not be fetched!"
-            });
-        };
-
-        return res.status(200).json({
-            success: true,
-            message: "Products data has been fetched successfully!",
-            data: allProducts
-        });
-    } catch(error){
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error!",
-            error
-        });
-    };
-};
-
 async function editProducts(req, res){    
     try{
 
@@ -384,7 +344,6 @@ async function searchProduct(req, res){
 export {
     createProduct,
     getAllProducts,
-    getAdminProducts,
     editProducts,
     deleteProduct,
     searchProduct
