@@ -1,11 +1,10 @@
-import z, { success } from "zod";
+import z from "zod";
 import { Product } from "../models/Product";
 import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender";
 import { instance } from "../config/razorpay.js";
 import { paymentSuccessful } from "../mail/templates/paymentSuccessful.js";
 import { crypto } from "crypto";
-import mongoose from "mongoose";
 
 const productValidator = z.object({
     products: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid course ID")).min(1, "At least one product is required")
@@ -24,8 +23,6 @@ async function capturePayment(req, res){
         };
         
         const { products } = parsedResult.data;
-
-        const userId = req.user?._id;
 
         let totalAmount = 0;
 
