@@ -7,10 +7,9 @@ import { router as productRoute } from "./routes/productRoute.js"
 import { router as contactRoute } from "./routes/contactRoutes.js";
 import { router as profileRoute } from "./routes/profileRoutes.js"
 import { databaseConnect } from "./config/database.js";
-import dotenv from "dotenv";
 import { cloudinaryConnect } from "./config/cloudinary.js";
 
-
+import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
