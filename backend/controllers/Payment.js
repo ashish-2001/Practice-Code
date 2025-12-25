@@ -4,7 +4,7 @@ import { User } from "../models/User.js";
 import { mailSender } from "../utils/mailSender";
 import { instance } from "../config/razorpay.js";
 import { paymentSuccessful } from "../mail/templates/paymentSuccessful.js";
-import { crypto } from "crypto";
+import crypto from "crypto";
 import mongoose from "mongoose";
 import { Transaction } from "../models/Transaction.js";
 
@@ -76,7 +76,8 @@ async function verifyPayment(req, res){
         const { razorpay_order_id,
             razorpay_payment_id,
             razorpay_signature,
-            products
+            products,
+            amount
         } = req.body;
 
         const userId = req.user._id;
@@ -124,7 +125,7 @@ async function verifyPayment(req, res){
                 [
                     {
                         orderId: razorpay_order_id,
-                        amount: req.body.amount,
+                        amount,
                         status: "Success",
                         txnId: razorpay_payment_id,
                         providerResponse: req.body
