@@ -5,6 +5,8 @@ import { mailSender } from "../utils/mailSender";
 import { instance } from "../config/razorpay.js";
 import { paymentSuccessful } from "../mail/templates/paymentSuccessful.js";
 import { crypto } from "crypto";
+import mongoose from "mongoose";
+import { Transaction } from "../models/Transaction.js";
 
 const productValidator = z.object({
     products: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid course ID")).min(1, "At least one product is required")
@@ -18,34 +20,39 @@ async function capturePayment(req, res){
         if(!parsedResult.success){
             return res.status(400).success({
                 success: false,
-                message: "All fields are required!"
+                message: parsedResult.error.errors[0].message
             });
         };
         
         const { products } = parsedResult.data;
-
         let totalAmount = 0;
 
         for(const productId of products){
             const product = await Product.findById(productId);
 
-            if(!product){
+            if(!product || product.status !== "active"){
                 return res.status(404).json({
                     success: false,
                     message: "Product not found"
                 })
             }
 
-            totalAmount += product.price;
+            if(product.stock < product.minOrderQuantity){
+                return res.status(400).json({
+                    success: false,
+                    message: "Product out of stock"
+                })
+            }
+
+            const price = product.discountPrice ?? product.price;
+            totalAmount += price;
         }
 
-        const options = {
+        const order = await instance.orders.create({
             amount: totalAmount * 100,
             currency: "INR",
-            receipt: `receipt_${Date.now()}`
-        }
-
-        const order = await instance.orders.create(options);
+            receipt: `receipt_${Date.now}`
+        });
 
         return res.status(200).json({
             success: false,
@@ -92,30 +99,62 @@ async function verifyPayment(req, res){
             });
         };
 
-        await userPurchased(products, userId);
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-        return res.status(200).json({
-            success: false,
-            message: "Payment verified successfully"
-        });
+        try{
+            for(const productId of products){
+                await Product.findByIdAndUpdate(
+                    productId,
+                    {
+                        $inc: { stock: -1 },
+                        $addToSet: { purchasedBy: userId }
+                    },
+                    { session }
+                )
+
+                await User.findByIdAndUpdate(
+                    userId,
+                    { $addToSet: { products: productId }},
+                    { session }
+                );
+            }
+
+            await Transaction.create(
+                [
+                    {
+                        orderId: razorpay_order_id,
+                        amount: req.body.amount,
+                        status: "Success",
+                        txnId: razorpay_payment_id,
+                        providerResponse: req.body
+                    }
+                ],
+                { session }
+            );
+
+            await session.commitTransaction();
+            session.endSession();
+
+            return res.status(200).json({
+                success: false,
+                message: "Payment verified successfully"
+            });
+        } catch(e){
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                error: e.message
+            })
+        }
     } catch(e){
         return res.status(500).json({
             success: false,
             message: "Internal server error",
             error: e.message
         });
-    };
-};
-
-async function userPurchased(products, userId){
-    for(const productId of products){
-        await Product.findByIdAndUpdate(productId, {
-            $push: { userPurchases: userId }
-        });
-
-        await User.findByIdAndUpdate(userId, {
-            $push: { products: productId }
-        })
     };
 };
 
