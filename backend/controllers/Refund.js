@@ -5,9 +5,7 @@ import { Product } from "../models/Product";
 import { Transaction } from "../models/Transaction";
 import { mailSender } from "../utils/mailSender";
 import { refundSuccessfulEmail } from "../mail/templates/refundSuccessfulEmail";
-import { success } from "zod";
 import { verifyRazorpayWebhook } from "../utils/verifyRazorpayWebhook";
-import { isValid } from "zod/v3";
 
 async function requestRefund(req, res){
 
@@ -99,11 +97,13 @@ async function requestRefund(req, res){
 };
 
 async function razorpayWebhook(req, res){
+    const session = session.startSession();
+    session.startTransaction()
 
     try{
         const valid = verifyRazorpayWebhook(req);
 
-        if(!isValid){
+        if(!valid){
             return res.status(401).json({
                 success: false,
                 message: "Field is required"
@@ -141,6 +141,7 @@ async function razorpayWebhook(req, res){
                     success: true
                 });
             }
+
             for(const item of order.items){
                 await Product.findByIdAndUpdate(
                     item.product,
@@ -161,11 +162,26 @@ async function razorpayWebhook(req, res){
 
             await session.commitTransaction();
             session.endSession();
-            }
-        } catch(e){
-            await session.abortTransaction();
-            session.endSession();
+        }
+
+        return res.status(200).json({
+            success: true
+        })
+    } catch(e){
+        await session.abortTransaction();
+        session.endSession()
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: e.message
+        })
     }
+};
+
+export {
+    requestRefund,
+    razorpayWebhook
 }
 
 async function refundPayment(req, res){
