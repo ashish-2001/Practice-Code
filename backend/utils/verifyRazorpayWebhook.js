@@ -12,4 +12,4 @@ function verifyRazorpayWebhook(req){
 
 export {
     verifyRazorpayWebhook
-}
+};
