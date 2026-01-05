@@ -18,7 +18,7 @@ function ProductBuilderForm(){
     const {
         register,
         handleSubmit,
-        setValue,
+        setValue,+
         formState: { errors }
     } = useForm();
 
