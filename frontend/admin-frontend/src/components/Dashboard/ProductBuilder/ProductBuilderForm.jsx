@@ -18,13 +18,15 @@ function ProductBuilderForm(){
     const {
         register,
         handleSubmit,
-        setValue,+
+        setValue,
         formState: { errors }
     } = useForm();
 
     const onSubmit = async (Data) => {
         let result = null;
         setLoading(true);
-        if(editSection)
+        if(editSection){
+            result = await 
+        }
     }
 }
