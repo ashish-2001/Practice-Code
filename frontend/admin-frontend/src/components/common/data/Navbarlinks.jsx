@@ -22,7 +22,7 @@ const NavbarLinks = [
     {
         title: 'Collections',
         path: '/collections'
-    }
+    },
     {
         title: 'About us',
         path: '/about-us'
