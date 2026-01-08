@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FaHeart, FaGoogle, FaTwitter, FaYoutube, FaFacebook } from "react-icons/fa";
 import { SlLocationPin } from "react-icons/sl";
+import { FooterLink, SocialMediaLinks } from "./data/Footerlink";
 
 const Policy = ['Shipping & Delivery Policy', 'Return & Exchange Policy', 'Payment Policy', 'Grievance Redressal Policy'];
 const Help = ['FAQs', 'Contact Us', 'terms of Service', 'Privacy Policy', 'Track Order', 'Return & Exchange']
@@ -23,52 +24,29 @@ function Footer(){
                     </p>
                 </div>
                 <div>
-                    <h1>
-                        Policy
-                    </h1>
-                    <div>
-                        {Policy.map((ele, i) => {
-                            return (
-                                <div className="" key={i}>
-                                    <Link to={ele.split(' ').join('-').toLowerCase()}>{ele}</Link>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-                <div>
-                    <h1>Help</h1>
-                    <div>
-                        {Help.map((ele, i) => {
-                            return (
-                                <div className="" key={i}>
-                                    <Link to={ele.split(' ').join('-').toLowerCase()}>{ele}</Link>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-                <div>
-                    <h1>
-                        About
-                    </h1>
-                    <div>
-                        {About.map((ele, i) => {
-                            return (
-                                <div className="" key={i}>
-                                    <Link to={ele.split(' ').join('-').toLowerCase()}></Link>
-                                </div>
-                            )
-                        })}
-                    </div>
+                    {FooterLink.map((ele, i) => (
+                        <div key={i}>
+                            <h1>
+                                {ele.title}
+                            </h1>
+                            <div>
+                                {ele.links.map((link, i) => (
+                                    <div key={i}>
+                                        <Link to={link.link}>{link.title}</Link>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
-            <div>
-                <div>
-                    <Link to={''}><FaFacebook/></Link>
-                    <Link to={''}><FaGoogle/></Link>
-                    <Link to={''}><FaTwitter/></Link>
-                    <Link to={''}><FaYoutube/></Link>
+            <div className="flex flex-col">
+                <div className="flex">
+                    {SocialMediaLinks.map((ele, i) => (
+                        <div key={i}>
+                            <Link to={ele.link}>{ele.logo}</Link>
+                        </div>
+                    ))}
                 </div>
                 <p>All rights are reserved ©</p>
             </div>
