@@ -1,14 +1,13 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"
-import { HiSearch } from "react-icons/hi";
 import { GiHamburgerMenu } from "react-icons/gi";
-import { TiShoppingCart } from "react-icons/ti";
 import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
 import { IoSearch } from 'react-icons/io5';
 import { IoIosHeartEmpty } from 'react-icons/Io';
 import { CiUser } from 'react-icons/ci';
 import { IoCartOutline } from "react-icons/io5";
+import { NavbarLinks } from "./data/Navbarlinks";
 
 
 function Navbar(){
@@ -39,7 +38,9 @@ function Navbar(){
                 <nav>
                     <ul>
                         {NavbarLinks?.map((ele, i) => (
-                            
+                            <li key={i}>
+
+                            </li>
                         ))}
                     </ul>
                 </nav>

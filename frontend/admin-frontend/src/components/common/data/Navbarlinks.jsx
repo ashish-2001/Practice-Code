@@ -1,0 +1,9 @@
+const NavbarLinks = [
+    {
+
+    }
+];
+
+export {
+    NavbarLinks
+}
