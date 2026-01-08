@@ -28,7 +28,7 @@ function SigninForm(){
     }
 
     return (
-        <div style={{ backgroundImage: 'url('')'}}>
+        <div style={{ backgroundImage: 'url('')'  }} className="">
             <form onSubmit={handleOnSubmit}>
                 <div>
                     <label>
