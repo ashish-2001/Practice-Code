@@ -1,4 +1,5 @@
 const ShippingAndDeliveryPolicy = {
+    
     title: 'Shipping & Delivery Policy',
     breadCrumb: ['Home', 'Delivery Policy'],
     subTitle: 'At Palmonas, we partner with trusted courier services to ensure your orders reach you safely and efficiently.',
