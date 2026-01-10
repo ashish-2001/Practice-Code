@@ -4,11 +4,6 @@ import { FaHeart, FaGoogle, FaTwitter, FaYoutube, FaFacebook } from "react-icons
 import { SlLocationPin } from "react-icons/sl";
 import { FooterLink, SocialMediaLinks } from "./data/Footerlink";
 
-const Policy = ['Shipping & Delivery Policy', 'Return & Exchange Policy', 'Payment Policy', 'Grievance Redressal Policy'];
-const Help = ['FAQs', 'Contact Us', 'terms of Service', 'Privacy Policy', 'Track Order', 'Return & Exchange']
-const About = ['About Us', 'Blogs', 'Contact Us', 'Stores & Services']
-
-
 function Footer(){
 
     return (
