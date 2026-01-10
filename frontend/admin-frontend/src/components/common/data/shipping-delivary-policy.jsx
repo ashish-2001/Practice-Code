@@ -1,4 +1,29 @@
 const ShippingAndDeliveryPolicy = {
+    title: 'Shipping & Delivery Policy',
+    breadCrumb: ['Home', 'Delivery Policy'],
+    subTitle: 'At Palmonas, we partner with trusted courier services to ensure your orders reach you safely and efficiently.',
+    heading1: {
+        subHeading: 'Dispatch Timelines: ',
+        desc1: "Delivery estimates are shown at the product pages & checkout. These estimates depend on your specific pincode and the items you've chosen."
+    },
+    heading2: {
+        subHeading: 'Shipping Charges: ',
+        desc1: 'Prepaid orders: free shipping across india.',
+        desc2: 'Cash on Delivery(COD): $75 COD charge is Applicable(COD not available for LGD & Fine Gold items)',
+    },
+    heading3: {
+        subHeading: 'Order Tracking',
+        desc1: "'You'll receive a tracking link via SMS, Whatsapp and email.",
+        desc2: 'For any query, contact us at https://support.palmonas.com/.'
+    },
+    heading4: {
+        subHeading: 'Delays & Exceptions: ',
+        desc1: 'Occasional delays may occur due to weather, local restrictions, or courier-related issues.',
+        desc2: 'If your address becomes unserviceable, our team will contact with alternatives or a refund.'
+    }
+}
+
+const PaymentPolicy = {
 
     title: 'Payment Policy',
     breadCrumb: ['Home', 'Payment Policy'],
@@ -95,8 +120,11 @@ const ReturnAndExchangePolicy = {
         heading: 'Need Help?',
         desc: "For support, please visit 'https://support.palmonas.com/.We're always here to assist you."
     }
-}
+};
+
 
 export {
-    ShippingAndDeliveryPolicy
+    ShippingAndDeliveryPolicy,
+    ReturnAndExchangePolicy,
+    PaymentPolicy
 }
